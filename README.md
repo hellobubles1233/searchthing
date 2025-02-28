@@ -19,12 +19,28 @@ This solution does all of the work client side. Once you've visited the site onc
 - Test bang commands without setting up a custom search engine
 - Explore different bang options with helpful visual indicators
 - Experience instant redirects to your desired destinations
-- See examples of popular bang commands like !g (Google), !yt (YouTube), and !w (Wikipedia)
+
+## Recursive Mode
+
+For a bit of fun, you can activate "Recursive Mode" by adding `recursive=true` to the URL:
+
+```
+https://rebang.online/?recursive=true&q=%s
+```
+
+When activated, instead of redirecting immediately, !ReBang will:
+- Display a random joke about recursive functions
+- Fill in the search bar with your query without submitting it
+- Let you manually submit the search when you're ready
+
+It's a fun way to take a moment and appreciate the humor in programming!
+
+**Note:** Make sure to include the `?` character before the parameters. The application will attempt to handle URLs without it, but the correct format is always preferable.
 
 ## How to Use
 
 1. **As a Custom Search Engine:**
-   - Add the URL `https://rebang.link?q=%s` to your browser's custom search engines
+   - Add the URL `https://rebang.online?q=%s` to your browser's custom search engines
    - Set a keyword (like "!" or "rb") to trigger it
    - Type your keyword followed by your bang command in the address bar
 

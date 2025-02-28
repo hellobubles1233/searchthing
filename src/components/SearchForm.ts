@@ -2,6 +2,7 @@ import { createElement } from "../utils/dom";
 import { BangDropdown } from "./BangDropdown";
 import { SettingsModal } from "./SettingsModal";
 import { loadSettings, UserSettings } from "../utils/settings";
+import { getUrlParameters } from "../utils/redirect";
 
 export class SearchForm {
   private container: HTMLDivElement;
@@ -24,6 +25,20 @@ export class SearchForm {
     const searchHeading = createElement('h2', { 
       className: 'text-2xl md:text-3xl font-semibold mb-5 text-white/90 drop-shadow-sm flex items-center justify-between' 
     }, ['Test it now']);
+    
+    // Check if this is a recursive query - use custom function for URL parameters
+    const urlParams = getUrlParameters();
+    const isRecursive = urlParams.get("recursive") === "true";
+    const query = urlParams.get("q");
+    
+    console.log("SearchForm constructor - Is Recursive:", isRecursive, "Query:", query);
+    
+    if (isRecursive && query) {
+      console.log("Updating search heading for recursive mode");
+      // For recursive mode, make the heading more subtle
+      searchHeading.textContent = "Your query:";
+      searchHeading.className = 'text-lg font-medium text-[#a788ff]/70 mb-3 flex items-center justify-between';
+    }
     
     // Add settings gear icon
     const settingsIcon = createElement('button', {
@@ -228,6 +243,43 @@ export class SearchForm {
   
   public focus(): void {
     setTimeout(() => {
+      // Check if this is a recursive query - use custom function for URL parameters
+      const urlParams = getUrlParameters();
+      const isRecursive = urlParams.get("recursive") === "true";
+      const query = urlParams.get("q");
+      
+      console.log("SearchForm focus - Is Recursive:", isRecursive, "Query:", query);
+      
+      if (isRecursive && query) {
+        console.log("Filling search input with query:", query);
+        // If we have a recursive query, fill the search input with it
+        this.searchInput.value = query;
+        
+        // Ensure cursor is positioned at the end
+        this.searchInput.selectionStart = this.searchInput.selectionEnd = query.length;
+        
+        // Add a subtle pulse effect to the input rather than a full glow
+        this.searchInput.classList.add('recursive-input');
+        
+        // Create and add a CSS rule for the subtle effect
+        if (!document.getElementById('recursive-style')) {
+          const style = document.createElement('style');
+          style.id = 'recursive-style';
+          style.textContent = `
+            .recursive-input {
+              border-color: rgba(138, 43, 226, 0.3) !important;
+              transition: all 0.3s ease;
+            }
+            
+            .recursive-input:focus {
+              border-color: rgba(138, 43, 226, 0.5) !important;
+              box-shadow: 0 0 10px rgba(138, 43, 226, 0.2);
+            }
+          `;
+          document.head.appendChild(style);
+        }
+      }
+      
       this.searchInput.focus();
     }, 100);
   }

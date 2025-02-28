@@ -12,6 +12,15 @@ export const bangs = [
     u: "https://www.t3.chat/new?q={{{s}}}",
   },
   {
+    c: "Online Services",
+    d: "!ReBang",
+    r: 1000,
+    s: "ReBang",
+    sc: "Search",
+    t: "rb",
+    u: "http://localhost:5173/recursive=true&q={{{s}}}",
+  },
+  {
     c: "AI",
     d: "www.chatgpt.com",
     r: 0,
@@ -86935,7 +86944,7 @@ export const bangs = [
     r: 6,
     s: "Current ruby docs",
     sc: "Programming",
-    t: "rb",
+    t: "rby",
     u: "https://rubydocs.org/d/ruby-latest/?q={{{s}}}",
   },
   {
