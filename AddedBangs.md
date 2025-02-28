@@ -2,5 +2,6 @@
 
 - Claude
 - ChatGPT
+- Perplexity
 - Obsidian Plugins
 - Figma Plugins
