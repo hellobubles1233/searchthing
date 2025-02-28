@@ -9,13 +9,15 @@ export class URLInput {
   private container: HTMLDivElement;
   
   constructor(props: URLInputProps) {
-    // Create URL container
-    this.container = createElement('div', { className: 'url-container' });
+    // Create URL container with Tailwind classes
+    this.container = createElement('div', { 
+      className: 'flex items-center gap-2 my-6' 
+    });
     
-    // Create URL input
+    // Create URL input with Tailwind classes
     const urlInput = createElement('input', {
       type: 'text',
-      className: 'url-input',
+      className: 'flex-1 py-3 px-4 border border-gray-200 rounded-sm bg-white text-sm shadow-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10',
       value: props.value,
       readonly: 'true'
     });

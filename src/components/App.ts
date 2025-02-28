@@ -8,27 +8,20 @@ export class App {
   private searchForm: SearchForm;
   
   constructor() {
-    // Create main container
+    // Create main container with Tailwind classes
     this.container = createElement('div', {
-      className: 'main-container'
+      className: 'flex flex-col items-center justify-center min-h-screen px-4 py-8 bg-[linear-gradient(30deg,#000,#2a004d)]'
     });
     
-    // Create content container
+    // Create content container with Tailwind classes
     const contentContainer = createElement('div', {
-      className: 'content-container'
+      className: 'w-full max-w-2xl text-center p-6 md:p-10 bg-black/10 backdrop-blur-xxl rounded-3xl shadow-md'
     });
     
-    // Create header
-    const header = createElement('h1', {}, ['Und*ck']);
-    
-    // Create description
-    const description = createElement('p', {}, [
-      'DuckDuckGo\'s bang redirects are too slow. Add the following URL as a custom search engine to your browser. Enables ',
-      createLink('all of DuckDuckGo\'s bangs.', 'https://duckduckgo.com/bang.html')
-    ]);
-    
-    // Create URL input
-    const urlInput = new URLInput({ value: 'https://unduck.link?q=%s' });
+    // Create header with Tailwind classes
+    const header = createElement('h1', {
+      className: 'text-5xl md:text-6xl font-bold mb-8 py-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent'
+    }, ['!ReBang']);
     
     // Create search form
     this.searchForm = new SearchForm();
@@ -39,8 +32,6 @@ export class App {
     // Add all elements to the content container
     contentContainer.append(
       header, 
-      description, 
-      urlInput.getElement(), 
       this.searchForm.getElement()
     );
     

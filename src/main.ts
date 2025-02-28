@@ -1,4 +1,4 @@
-import "./global.css";
+import "./tailwind.css";
 import { App } from "./components/App";
 import { performRedirect } from "./utils/redirect";
 
