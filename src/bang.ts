@@ -1,6 +1,34 @@
 // This file was (mostly) ripped from https://duckduckgo.com/bang.js
 
 export const bangs = [
+  //I'll leave this at the very top as a thanks to Theo for creating Unduck <3
+  {
+    c: "AI",
+    d: "www.t3.chat",
+    r: 10,
+    s: "T3 Chat",
+    sc: "AI",
+    t: "t3",
+    u: "https://www.t3.chat/new?q={{{s}}}",
+  },
+  {
+    c: "AI",
+    d: "www.chatgpt.com",
+    r: 0,
+    s: "ChatGPT",
+    sc: "AI",
+    t: "chat",
+    u: "https://chatgpt.com/?q={{{s}}}",
+  },
+  {
+    c: "AI",
+    d: "www.chatgpt.com",
+    r: 0,
+    s: "ChatGPT",
+    sc: "AI",
+    t: "cgpt",
+    u: "https://chatgpt.com/?q={{{s}}}",
+  },
   {
     c: "AI",
     d: "www.claude.ai",
@@ -12,13 +40,14 @@ export const bangs = [
   },
   {
     c: "AI",
-    d: "www.t3.chat",
+    d: "www.claude.ai",
     r: 0,
-    s: "T3 Chat",
+    s: "Claude AI",
     sc: "AI",
-    t: "t3",
-    u: "https://www.t3.chat/new?q={{{s}}}",
+    t: "clai",
+    u: "https://claude.ai/new?q={{{s}}}",
   },
+
   {
     c: "Tech",
     d: "www.01net.com",
@@ -17014,7 +17043,7 @@ export const bangs = [
     r: 3580,
     s: "Duck.ai",
     sc: "Reference",
-    t: "chat",
+    t: "duckai",
     u: "https://www.duckduckgo.com/?q={{{s}}}&ia=chat&bang=true ",
   },
   {
