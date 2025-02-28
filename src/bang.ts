@@ -1,11 +1,11 @@
 // This file was (mostly) ripped from https://duckduckgo.com/bang.js
 
 export const bangs = [
-  //I'll leave this at the very top as a thanks to Theo for creating Unduck <3
+  //I'll leave this at the very top of ai results as a thanks to Theo for creating Unduck <3
   {
     c: "AI",
     d: "www.t3.chat",
-    r: 10,
+    r: 1000,
     s: "T3 Chat",
     sc: "AI",
     t: "t3",
@@ -47,7 +47,6 @@ export const bangs = [
     t: "clai",
     u: "https://claude.ai/new?q={{{s}}}",
   },
-
   {
     c: "Tech",
     d: "www.01net.com",
@@ -107330,15 +107329,6 @@ export const bangs = [
     u: "https://tinyurl.com/create.php?source=indexpage&url={{{s}}}&submit=Make+TinyURL%21&alias= ",
   },
   {
-    c: "Multimedia",
-    d: "www.youtube.com",
-    r: 1138,
-    s: "YouTube",
-    sc: "Video",
-    t: "ty",
-    u: "https://www.youtube.com/results?search_query={{{s}}}",
-  },
-  {
     c: "News",
     d: "www.timeanddate.com",
     r: 11,
@@ -111239,15 +111229,6 @@ export const bangs = [
     sc: "Search",
     t: "visualh",
     u: "https://visualhunt.com/search/instant/?q={{{s}}}",
-  },
-  {
-    c: "Multimedia",
-    d: "www.yasiv.com",
-    r: 0,
-    s: "visual-youtube",
-    sc: "Video",
-    t: "visual-youtube",
-    u: "http://www.yasiv.com/youtube#?q={{{s}}}",
   },
   {
     c: "Research",
@@ -120345,15 +120326,6 @@ export const bangs = [
     sc: "TV",
     t: "yourtv",
     u: "http://www.yourtv.com.au/guide/search.aspx?q={{{s}}}",
-  },
-  {
-    c: "Multimedia",
-    d: "youtubeonrepeat.com",
-    r: 3,
-    s: "Youtube on Repeat",
-    sc: "Video",
-    t: "youtubeonrepeat",
-    u: "http://youtubeonrepeat.com/results/?search_query={{{s}}}",
   },
   {
     c: "Multimedia",
