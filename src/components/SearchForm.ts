@@ -1,14 +1,16 @@
 import { createElement } from "../utils/dom";
+import { BangDropdown } from "./BangDropdown";
 
 export class SearchForm {
   private container: HTMLDivElement;
   private form: HTMLFormElement;
   private searchInput: HTMLInputElement;
+  private bangDropdown: BangDropdown;
   
   constructor() {
     // Create search container with Tailwind classes - improved styling
     this.container = createElement('div', { 
-      className: 'w-full mt-10 pt-6 border-t border-white/10' 
+      className: 'w-full mt-10 pt-6 border-t border-white/10 relative' 
     });
     
     // Create search heading with Tailwind classes - more appealing typography
@@ -67,7 +69,8 @@ export class SearchForm {
     const examples = [
       { name: '!g', desc: 'Google' },
       { name: '!yt', desc: 'YouTube' },
-      { name: '!w', desc: 'Wikipedia' }
+      { name: '!w', desc: 'Wikipedia' },
+      { name: "!gh", desc: "GitHub"}
     ];
     
     examples.forEach(ex => {
@@ -114,6 +117,69 @@ export class SearchForm {
         }, 100);
       }
     });
+    
+    // Initialize the bang dropdown
+    this.bangDropdown = new BangDropdown(this.searchInput, {
+      onSelectBang: (bangText) => this.handleBangSelection(bangText)
+    });
+    
+    // Add event listeners for bang autocomplete
+    this.setupBangAutocomplete();
+  }
+  
+  private setupBangAutocomplete(): void {
+    this.searchInput.addEventListener("input", () => {
+      const inputValue = this.searchInput.value;
+      const bangMatch = inputValue.match(/!([a-zA-Z0-9]*)$/);
+      
+      if (bangMatch) {
+        const bangQuery = bangMatch[1].toLowerCase();
+        this.bangDropdown.show(bangQuery);
+      } else {
+        this.bangDropdown.hide();
+      }
+    });
+    
+    // Handle keyboard navigation in dropdown
+    this.searchInput.addEventListener("keydown", (e) => {
+      if (!this.bangDropdown.isDropdownVisible()) return;
+      
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          this.bangDropdown.navigateDown();
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          this.bangDropdown.navigateUp();
+          break;
+        case "Tab":
+        case "Enter":
+          e.preventDefault();
+          this.bangDropdown.selectCurrent();
+          break;
+        case "Escape":
+          this.bangDropdown.hide();
+          break;
+      }
+    });
+  }
+  
+  private handleBangSelection(bangText: string): void {
+    const inputValue = this.searchInput.value;
+    const lastBangPos = inputValue.lastIndexOf('!');
+    
+    if (lastBangPos >= 0) {
+      // Replace the partial bang with the selected one and add a space
+      const newValue = inputValue.substring(0, lastBangPos + 1) + bangText + ' ';
+      this.searchInput.value = newValue;
+      this.searchInput.focus();
+      
+      // Set cursor position after the bang
+      setTimeout(() => {
+        this.searchInput.selectionStart = this.searchInput.selectionEnd = newValue.length;
+      }, 0);
+    }
   }
   
   public getElement(): HTMLDivElement {
