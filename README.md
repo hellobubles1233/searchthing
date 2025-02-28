@@ -1,54 +1,68 @@
 # !ReBang
 
-DuckDuckGo's bang redirects are too slow. Add the following URL as a custom search engine to your browser. Enables all of DuckDuckGo's bangs to work, but much faster.
+[![Live Site](https://img.shields.io/badge/Live_Site-!ReBang-blue?style=for-the-badge&logo=googlechrome&logoColor=white)](https://rebang.online)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](https://makeapullrequest.com)
 
-```
-https://rebang.online?q=%s
-```
+## [Rebang.Online](https://rebang.online)
 
-## How is it that much faster?
+An enhanced, feature-rich fork of [unduck](https://github.com/t3dotgg/unduck) that makes DuckDuckGo's bang redirects lightning fast while adding powerful new features and a modern interface.
 
-DuckDuckGo does their redirects server side. Their DNS is...not always great. Result is that it often takes ages.
 
-This solution does all of the work client side. Once you've visited the site once, the JS is all cached and will never need to be downloaded again. Your device does the redirects, not a server.
+## Modern, Intuitive Interface
 
-## Search Bar Feature
+!ReBang features a clean, modern UI that makes searching with bangs more enjoyable:
 
-!ReBang now includes an intuitive search bar directly on the homepage that lets you:
+![ReBang Interface Screenshot](public/screenshot.png)
 
-- Test bang commands without setting up a custom search engine
-- Explore different bang options with helpful visual indicators
-- Experience instant redirects to your desired destinations
+* Sleek, responsive design that works on all devices
+* Dark mode default
+* Visual feedback during searches
 
-## Recursive Mode
 
-For a bit of fun, you can activate "Recursive Mode" by adding `recursive=true` to the URL:
+## Intelligent Search with Bang Discovery
 
-```
-https://rebang.online/?recursive=true&q=%s
-```
+The search bar on the !ReBang home page does more than just accept queries:
 
-When activated, instead of redirecting immediately, !ReBang will:
-- Display a random joke about recursive functions
-- Fill in the search bar with your query without submitting it
-- Let you manually submit the search when you're ready
+* **Bang autocomplete** - Discover new bangs as you type with intelligent suggestions
+* **Visual indicators** - See which bangs are available for your current query
+* **Instant feedback** - Know exactly where you'll be redirected before pressing Enter
 
-It's a fun way to take a moment and appreciate the humor in programming!
+## Expanded Bang Collection
 
-**Note:** Make sure to include the `?` character before the parameters. The application will attempt to handle URLs without it, but the correct format is always preferable.
+!ReBang goes beyond DuckDuckGo's bang collection:
 
+* **AI-focused bangs** - Quickly access ChatGPT (`!chat`), Claude (`!claude`), Perplexity (`!perp`), and other AI assistants
+* **Curated collection** - Our bang list is regularly audited to remove dead links that DuckDuckGo hasn't maintained
+* **Community suggestions** - New bangs are added based on user requests and usage patterns
 ## How to Use
 
 1. **As a Custom Search Engine:**
-   - Add the URL `https://rebang.online?q=%s` to your browser's custom search engines
-   - Set a keyword (like "!" or "rb") to trigger it
-   - Type your keyword followed by your bang command in the address bar
+   - Go to https://rebang.online/ to configure !ReBang to your preferences. (Default Search)
+   - Add the URL `https://rebang.online/?q=%s` to your browser's custom search engines
+   - Set !ReBang as your default search engine.
+   - Type your search, include a bang `!g` `!yt` `!w` somewhere in the seach, and !ReBang will reroute your request to where you want to search.
 
-2. **Direct Use:**
-   - Visit the website directly
+2. **Direct Use:** 
+   - Visit the website directly https://rebang.online/
    - Use the search bar to enter your bang commands
    - Get redirected instantly to your destination
 
-## About
+## How !ReBang Improves on DuckDuckGo and unduck
 
-This project is based on [unduck](https://github.com/t3dotgg/unduck) by Theo Browne, with added features and UI improvements.
+| Feature | DuckDuckGo | unduck | !ReBang |
+|---------|------------|--------|---------|
+| Fast Redirects | ❌ (Server-side) | ✅ (Client-side) | ✅ (Client-side) |
+| Modern UI | ✅ | ❌ | ✅ |
+| Bang Autocomplete | ✅ | ❌ | ✅ |
+| AI-focused Bangs | ❌ | T3 Only | ✅ |
+| Maintained Bang List | Partially | ❌ | ✅ |
+
+## Why !ReBang?
+
+* **Speed**: Redirects happen instantly on your device without server latency
+* **Discovery**: Find useful new bangs you never knew existed
+* **Reliability**: Dead links are regularly pruned from our bang collection
+* **Privacy**: Your searches stay on your device - we don't track anything
+* **Modern**: Sleek and Simple.
+* **Community-driven**: Actively maintained and improved based on user feedback

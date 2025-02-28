@@ -18,7 +18,7 @@ export const bangs = [
     s: "ReBang",
     sc: "Search",
     t: "rb",
-    u: "http://localhost:5173/recursive=true&q={{{s}}}",
+    u: "https://rebang.online/recursive=true&q={{{s}}}",
   },
   {
     c: "AI",
