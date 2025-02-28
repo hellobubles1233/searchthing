@@ -1,13 +1,20 @@
 import { createElement } from "../utils/dom";
 import { BangDropdown } from "./BangDropdown";
+import { SettingsModal } from "./SettingsModal";
+import { loadSettings, UserSettings } from "../utils/settings";
 
 export class SearchForm {
   private container: HTMLDivElement;
   private form: HTMLFormElement;
   private searchInput: HTMLInputElement;
   private bangDropdown: BangDropdown;
+  private settingsModal: SettingsModal;
+  private settings: UserSettings;
   
   constructor() {
+    // Load user settings
+    this.settings = loadSettings();
+    
     // Create search container with Tailwind classes - improved styling
     this.container = createElement('div', { 
       className: 'w-full mt-10 pt-6 border-t border-white/10 relative' 
@@ -15,8 +22,27 @@ export class SearchForm {
     
     // Create search heading with Tailwind classes - more appealing typography
     const searchHeading = createElement('h2', { 
-      className: 'text-2xl md:text-3xl font-semibold mb-5 text-white/90 drop-shadow-sm' 
+      className: 'text-2xl md:text-3xl font-semibold mb-5 text-white/90 drop-shadow-sm flex items-center justify-between' 
     }, ['Test it now']);
+    
+    // Add settings gear icon
+    const settingsIcon = createElement('button', {
+      className: 'text-white/50 hover:text-white/90 transition-colors ml-3 w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10'
+    }, ['⚙️']);
+    
+    // Initialize settings modal
+    this.settingsModal = new SettingsModal((newSettings) => {
+      // Update local settings when modal settings change
+      this.settings = newSettings;
+    });
+    
+    // Add click event for settings icon
+    settingsIcon.addEventListener('click', () => {
+      this.settingsModal.toggle();
+    });
+    
+    // Add settings icon to heading
+    searchHeading.appendChild(settingsIcon);
     
     // Create search form with Tailwind classes - integrated design
     this.form = createElement('form', { 
@@ -48,24 +74,23 @@ export class SearchForm {
     // Create search input with Tailwind classes - adjusted padding for right logo
     this.searchInput = createElement('input', {
       type: 'text',
-      id: 'search-input',
-      className: 'w-full py-4 pl-4 pr-14 bg-white/10 border border-white/10 rounded-full text-white placeholder-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#3a86ff]/30 focus:border-[#3a86ff]/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.2)]',
-      placeholder: 'Type !bang followed by search term (e.g., !g apple)',
-      autocomplete: 'off'
+      placeholder: 'Type your search query or !bang search',
+      className: 'w-full px-4 py-3 pr-14 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded-xl border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white shadow-lg',
+      autocomplete: 'off',
+      spellcheck: 'false',
+      autocapitalize: 'off'
     });
     
-    // Append elements
+    // Assemble the search components
     inputWrapper.append(this.searchInput, searchButton);
-    
-    // Add input wrapper to form
     this.form.appendChild(inputWrapper);
     
-    // Create search info with Tailwind classes - improved styling
-    const searchInfo = createElement('p', { 
-      className: 'text-sm text-white/50 mt-4 flex flex-wrap gap-2 justify-center' 
+    // Create search info badges - improved appearance
+    const searchInfo = createElement('div', {
+      className: 'flex flex-wrap gap-2 mt-3 justify-center' 
     });
     
-    // Create example badges
+    // Search examples that visually explain bang syntax
     const examples = [
       { name: '!g', desc: 'Google' },
       { name: '!yt', desc: 'YouTube' },
@@ -87,7 +112,13 @@ export class SearchForm {
     // Add event listener for form submission
     this.form.addEventListener("submit", (e) => {
       e.preventDefault();
-      const query = this.searchInput.value.trim();
+      let query = this.searchInput.value.trim();
+      
+      // If no bang is specified and a default bang is set, prepend it
+      if (!query.includes('!') && this.settings.defaultBang) {
+        query = `!${this.settings.defaultBang} ${query}`;
+      }
+      
       if (query) {
         // Add loading state to button when form is submitted
         const button = this.form.querySelector('button');

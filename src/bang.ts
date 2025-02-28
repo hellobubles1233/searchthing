@@ -8,7 +8,7 @@ export const bangs = [
     s: "Claude AI",
     sc: "AI",
     t: "claude",
-    u: "https://claude.ai/new?q=%s",
+    u: "https://claude.ai/new?q={{{s}}}",
   },
   {
     c: "AI",
