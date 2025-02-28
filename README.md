@@ -1,6 +1,6 @@
 # **!ReBang**
 
-[![Live Site](https://img.shields.io/badge/Live_Site-**!ReBang**-blue?style=for-the-badge&logo=googlechrome&logoColor=white)](https://rebang.online)
+[![Live Site](https://img.shields.io/badge/Live_Site-!ReBang-blue?style=for-the-badge&logo=googlechrome&logoColor=white)](https://rebang.online)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](https://makeapullrequest.com)
 
