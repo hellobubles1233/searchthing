@@ -24509,6 +24509,24 @@ export const bangs = [
     u: "http://ledenicheur.fr/#rparams=ss={{{s}}} ",
   },
   {
+    c: "Tech",
+    d: "obsidian.md",
+    r: 0,
+    s: "Obsidian Plugins",
+    sc: "Tools",
+    t: "obsidian",
+    u: "https://obsidian.md/plugins?search={{{s}}}",
+  },
+  {
+    c: "Tech",
+    d: "obsidian.md",
+    r: 0,
+    s: "Obsidian Plugins",
+    sc: "Tools",
+    t: "obs",
+    u: "https://obsidian.md/plugins?search={{{s}}}",
+  },
+  {
     c: "Online Services",
     d: "denl.dict.cc",
     r: 10,
@@ -35784,6 +35802,15 @@ export const bangs = [
     sc: "Online",
     t: "figuya",
     u: "https://figuya.com/en/products?q[query]={{{s}}}",
+  },
+  {
+    c: "Tech",
+    d: "figma.com",
+    r: 0,
+    s: "Figma Plugins",
+    sc: "Tools",
+    t: "figma",
+    u: "https://www.figma.com/community/search?resource_type=plugins&sort_by=relevancy&query={{{s}}}&editor_type=all&price=all&creators=all",
   },
   {
     c: "Research",
@@ -75690,15 +75717,7 @@ export const bangs = [
     t: "observador",
     u: "http://observador.pt/pesquisa/?q={{{s}}}",
   },
-  {
-    c: "Tech",
-    d: "build.opensuse.org",
-    r: 38,
-    s: "openSUSE Build Service",
-    sc: "Sysadmin",
-    t: "obs",
-    u: "https://build.opensuse.org/search?search_text={{{s}}} ",
-  },
+
   {
     c: "Tech",
     d: "docs.obspy.org",

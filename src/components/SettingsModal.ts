@@ -60,6 +60,9 @@ export class SettingsModal {
   public hide(): void {
     if (!this.overlay) return;
     
+    // Hide the dropdown first
+    this.hideBangDropdown();
+    
     // Apply fade-out animation
     this.overlay.style.opacity = '0';
     if (this.modal) this.modal.style.transform = 'translateY(20px)';
@@ -70,6 +73,9 @@ export class SettingsModal {
         document.body.removeChild(this.overlay);
       }
       this.isVisible = false;
+      
+      // Clean up the dropdown when hiding the modal
+      this.cleanup();
     }, 300);
     
     // Remove ESC key handler
@@ -209,9 +215,12 @@ export class SettingsModal {
     
     // Create dropdown container (hidden initially)
     this.defaultBangDropdown = createElement('div', {
-      className: 'absolute z-[999] left-0 right-0 top-full mt-2 bg-black/90 border border-white/10 rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-y-auto max-h-60 hidden scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent',
+      className: 'fixed z-[1001] bg-black/90 border border-white/10 rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-y-auto max-h-60 hidden scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent',
       style: 'background: linear-gradient(to bottom, rgba(45, 0, 30, 0.9), rgba(0, 0, 0, 0.95));'
     });
+    
+    // Append the dropdown to the document body instead
+    document.body.appendChild(this.defaultBangDropdown);
     
     // Add input event handler for showing dropdown
     this.defaultBangInput.addEventListener('input', () => {
@@ -285,8 +294,8 @@ export class SettingsModal {
       }
     });
     
-    // Append elements to input wrapper
-    inputWrapper.append(this.defaultBangInput, clearButton, this.defaultBangDropdown);
+    // Append elements to input wrapper - don't append dropdown here anymore
+    inputWrapper.append(this.defaultBangInput, clearButton);
     section.append(label, description, inputWrapper);
     
     return section;
@@ -322,6 +331,12 @@ export class SettingsModal {
       const item = this.createBangItem(bang);
       this.defaultBangDropdown?.appendChild(item);
     });
+    
+    // Position the dropdown based on the input's position
+    const inputRect = this.defaultBangInput.getBoundingClientRect();
+    this.defaultBangDropdown.style.width = `${inputRect.width}px`;
+    this.defaultBangDropdown.style.left = `${inputRect.left}px`;
+    this.defaultBangDropdown.style.top = `${inputRect.bottom + 8}px`; // 8px is equivalent to mt-2
     
     // Show dropdown
     this.defaultBangDropdown.style.display = 'block';
@@ -473,5 +488,14 @@ export class SettingsModal {
       block: 'nearest',
       behavior: 'smooth'
     });
+  }
+  
+  /**
+   * Cleanup method to remove dropdown from DOM when no longer needed
+   */
+  public cleanup(): void {
+    if (this.defaultBangDropdown && document.body.contains(this.defaultBangDropdown)) {
+      document.body.removeChild(this.defaultBangDropdown);
+    }
   }
 } 

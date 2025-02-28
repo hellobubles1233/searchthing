@@ -14,7 +14,7 @@ export class App {
     
     // Create content container with Tailwind classes - improved glass morphism effect
     const contentContainer = createElement('div', {
-      className: 'w-full max-w-2xl text-center p-6 md:p-10 bg-black/20 backdrop-blur-xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.25)] border border-white/5'
+      className: 'w-full max-w-6xl text-center p-6 md:p-10 bg-black/20 backdrop-blur-xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.25)] border border-white/5'
     });
     
     // Create logo container - larger size for the logo

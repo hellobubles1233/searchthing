@@ -27,8 +27,17 @@ export class SearchForm {
     
     // Add settings gear icon
     const settingsIcon = createElement('button', {
-      className: 'text-white/50 hover:text-white/90 transition-colors ml-3 w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10'
-    }, ['⚙️']);
+      className: 'text-white/50 hover:text-white/90 transition-colors ml-3 w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10'
+    });
+    
+    // Add settings icon image
+    const settingsImg = createElement('img', {
+      src: '/settings.png',
+      alt: 'Settings',
+      className: 'w-10 h-10 opacity-80 hover:opacity-100 transition-opacity'
+    });
+    
+    settingsIcon.appendChild(settingsImg);
     
     // Initialize settings modal
     this.settingsModal = new SettingsModal((newSettings) => {
