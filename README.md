@@ -1,6 +1,6 @@
-# !ReBang
+# **!ReBang**
 
-[![Live Site](https://img.shields.io/badge/Live_Site-!ReBang-blue?style=for-the-badge&logo=googlechrome&logoColor=white)](https://rebang.online)
+[![Live Site](https://img.shields.io/badge/Live_Site-**!ReBang**-blue?style=for-the-badge&logo=googlechrome&logoColor=white)](https://rebang.online)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](https://makeapullrequest.com)
 
@@ -11,7 +11,7 @@ An enhanced, feature-rich fork of [unduck](https://github.com/t3dotgg/unduck) th
 
 ## Modern, Intuitive Interface
 
-!ReBang features a clean, modern UI that makes searching with bangs more enjoyable:
+**!ReBang** features a clean, modern UI that makes searching with bangs more enjoyable:
 
 ![ReBang Interface Screenshot](public/screenshot.png)
 
@@ -22,7 +22,7 @@ An enhanced, feature-rich fork of [unduck](https://github.com/t3dotgg/unduck) th
 
 ## Intelligent Search with Bang Discovery
 
-The search bar on the !ReBang home page does more than just accept queries:
+The search bar on the **!ReBang** home page does more than just accept queries:
 
 * **Bang autocomplete** - Discover new bangs as you type with intelligent suggestions
 * **Visual indicators** - See which bangs are available for your current query
@@ -30,7 +30,7 @@ The search bar on the !ReBang home page does more than just accept queries:
 
 ## Expanded Bang Collection
 
-!ReBang goes beyond DuckDuckGo's bang collection:
+**!ReBang** goes beyond DuckDuckGo's bang collection:
 
 * **AI-focused bangs** - Quickly access ChatGPT (`!chat`), Claude (`!claude`), Perplexity (`!perp`), and other AI assistants
 * **Curated collection** - Our bang list is regularly audited to remove dead links that DuckDuckGo hasn't maintained
@@ -38,19 +38,19 @@ The search bar on the !ReBang home page does more than just accept queries:
 ## How to Use
 
 1. **As a Custom Search Engine:**
-   - Go to https://rebang.online/ to configure !ReBang to your preferences. (Default Search)
+   - Go to https://rebang.online/ to configure **!ReBang** to your preferences. (Default Search)
    - Add the URL `https://rebang.online/?q=%s` to your browser's custom search engines
-   - Set !ReBang as your default search engine.
-   - Type your search, include a bang `!g` `!yt` `!w` somewhere in the seach, and !ReBang will reroute your request to where you want to search.
+   - Set **!ReBang** as your default search engine.
+   - Type your search, include a bang `!g` `!yt` `!w` somewhere in the seach, and **!ReBang** will reroute your request to where you want to search.
 
 2. **Direct Use:** 
    - Visit the website directly https://rebang.online/
    - Use the search bar to enter your bang commands
    - Get redirected instantly to your destination
 
-## How !ReBang Improves on DuckDuckGo and unduck
+## How **!ReBang** Improves on DuckDuckGo and unduck
 
-| Feature | DuckDuckGo | unduck | !ReBang |
+| Feature | DuckDuckGo | unduck | **!ReBang** |
 |---------|------------|--------|---------|
 | Fast Redirects | ❌ (Server-side) | ✅ (Client-side) | ✅ (Client-side) |
 | Modern UI | ✅ | ❌ | ✅ |
@@ -58,7 +58,7 @@ The search bar on the !ReBang home page does more than just accept queries:
 | AI-focused Bangs | ❌ | T3 Only | ✅ |
 | Maintained Bang List | Partially | ❌ | ✅ |
 
-## Why !ReBang?
+## Why **!ReBang**?
 
 * **Speed**: Redirects happen instantly on your device without server latency
 * **Discovery**: Find useful new bangs you never knew existed
