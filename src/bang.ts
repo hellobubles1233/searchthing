@@ -3,6 +3,15 @@
 export const bangs = [
   {
     c: "AI",
+    d: "www.claude.ai",
+    r: 0,
+    s: "Claude AI",
+    sc: "AI",
+    t: "claude",
+    u: "https://claude.ai/new?q=%s",
+  },
+  {
+    c: "AI",
     d: "www.t3.chat",
     r: 0,
     s: "T3 Chat",
