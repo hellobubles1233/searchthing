@@ -1,4 +1,4 @@
-import { createElement, createLink } from "../utils/dom";
+import { createElement } from "../utils/dom";
 
 export class Footer {
   private footer: HTMLElement;

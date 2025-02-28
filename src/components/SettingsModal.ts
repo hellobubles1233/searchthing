@@ -6,7 +6,7 @@ import {
   updateSetting,
   UserSettings 
 } from "../utils/settings";
-import { BangItem } from "./BangDropdown";
+import { BangItem } from "../utils/bangUtils";
 
 export class SettingsModal {
   private modal: HTMLDivElement | null = null;
