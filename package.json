@@ -16,6 +16,8 @@
     "vite": "^6.1.0"
   },
   "dependencies": {
+    "@vercel/analytics": "^1.5.0",
+    "@vercel/speed-insights": "^1.2.0",
     "vite-plugin-pwa": "^0.21.1"
   }
 }
