@@ -57,6 +57,7 @@ The search bar on the **!ReBang** home page does more than just accept queries:
 | Bang Autocomplete | ✅ | ❌ | ✅ |
 | AI-focused Bangs | ❌ | T3 Only | ✅ |
 | Maintained Bang List | Partially | ❌ | ✅ |
+| No White Flash for Dark Mode Users | ❓ | ❌ | ✅ |
 
 ## Why **!ReBang**?
 
@@ -65,4 +66,5 @@ The search bar on the **!ReBang** home page does more than just accept queries:
 * **Reliability**: Dead links are regularly pruned from our bang collection
 * **Privacy**: Your searches stay on your device - we don't track anything
 * **Modern**: Sleek and Simple.
+* **Dark Mode Friendly**: Fixed the white flash issue during redirects that affected dark mode users in unduck
 * **Community-driven**: Actively maintained and improved based on user feedback
