@@ -52818,15 +52818,6 @@ export const bangs = [
     u: "https://www.ifun.de/suche/{{{s}}}",
   },
   {
-    c: "Online Services",
-    d: "ifunny.co",
-    r: 0,
-    s: "iFunny",
-    sc: "Social",
-    t: "ifunny",
-    u: "https://ifunny.co/search/memes?q={{{s}}}",
-  },
-  {
     c: "Shopping",
     d: "www.iga.net",
     r: 0,
