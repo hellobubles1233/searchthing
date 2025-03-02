@@ -55,6 +55,7 @@ The search bar on the **!ReBang** home page does more than just accept queries:
 | Fast Redirects | ❌ (Server-side) | ✅ (Client-side) | ✅ (Client-side) |
 | Modern UI | ✅ | ❌ | ✅ |
 | Bang Autocomplete | ✅ | ❌ | ✅ |
+| Configure Default Bang | ❌ | ❌ | ✅ |
 | AI-focused Bangs | ❌ | T3 Only | ✅ |
 | Maintained Bang List | Partially | ❌ | ✅ |
 | No White Flash for Dark Mode Users | ❓ | ❌ | ✅ |
