@@ -347,7 +347,9 @@ export class SettingsModal {
         // Try to match the current input and update selectedBangItem in real-time
         // This ensures even if the user doesn't select from dropdown, we capture their intent
         if (query.length > 0) {
-          const directMatch = bangs.find(b => b.t.toLowerCase() === query);
+          const directMatch = bangs.find(b => 
+            typeof b.t === 'string' ? b.t.toLowerCase() === query : b.t.some(t => t.toLowerCase() === query)
+          );
           if (directMatch) {
             this.selectedBangItem = directMatch;
           }
