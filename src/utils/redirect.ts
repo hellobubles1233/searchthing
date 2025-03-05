@@ -1,6 +1,7 @@
 import { bangs } from "../bang";
 import { loadSettings } from "./settings";
 import { getCombinedBangs } from "./bangUtils";
+import { showRedirectLoadingScreen } from "../components/RedirectLoadingScreen";
 
 // Get combined bangs (default + custom)
 const userSettings = loadSettings();
@@ -73,7 +74,6 @@ export function getBangRedirectUrl(): string | null {
   }
 
   const match = query.match(/!(\S+)/i);
-
   const bangCandidate = match?.[1]?.toLowerCase();
   console.log("Bang candidate:", bangCandidate);
   
@@ -128,6 +128,16 @@ export function performRedirect(): boolean {
   }
   
   console.log("Redirecting to:", searchUrl);
-  window.location.replace(searchUrl);
+  
+  // Show loading screen for better UX
+  const match = (query || "").match(/!(\S+)/i);
+  const bangName = match?.[1]?.toLowerCase() || "search";
+  
+  // For redirects, show a brief loading screen before redirecting
+  showRedirectLoadingScreen(bangName, searchUrl)
+    .then(() => {
+      window.location.replace(searchUrl);
+    });
+  
   return true;
 } 
