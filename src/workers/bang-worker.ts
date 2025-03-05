@@ -1,113 +1,22 @@
 import { BangItem } from "../types/BangItem";
-import { UserSettings } from "./settings";
 import { bangs as defaultBangs } from "../bang";
-import { bangWorker } from "./workerUtils";
+
+// Cache mechanism within the worker
+const workerCache = new Map<string, BangItem[]>();
+const MAX_CACHE_SIZE = 50;
 
 /**
- * Simple LRU cache for storing bang filter results
- * This helps reduce repeated expensive filtering operations
+ * Filter and sort bangs based on a query
  */
-class BangCache {
-  private cache: Map<string, BangItem[]>;
-  private maxSize: number;
-  
-  constructor(maxSize = 50) {
-    this.cache = new Map<string, BangItem[]>();
-    this.maxSize = maxSize;
-  }
-  
-  get(query: string): BangItem[] | null {
-    if (!query) return null;
-    
-    const item = this.cache.get(query);
-    if (item) {
-      // Move to front of LRU by deleting and re-adding
-      this.cache.delete(query);
-      this.cache.set(query, item);
-      return item;
-    }
-    return null;
-  }
-  
-  set(query: string, results: BangItem[]): void {
-    if (!query) return;
-    
-    // Evict oldest if needed
-    if (this.cache.size >= this.maxSize) {
-      const oldestKey = this.cache.keys().next().value;
-      if (oldestKey !== undefined) {
-        this.cache.delete(oldestKey);
-      }
-    }
-    this.cache.set(query, results);
-  }
-  
-  clear(): void {
-    this.cache.clear();
-  }
-}
-
-// Create a singleton instance of the cache
-const bangFilterCache = new BangCache();
-
-/**
- * Combines default bangs with user's custom bangs
- * Custom bangs with the same trigger as default bangs will override them
- * 
- * @param settings User settings containing custom bangs
- * @returns Combined array of bangs with custom bangs taking precedence
- */
-export function getCombinedBangs(settings: UserSettings): BangItem[] {
-  if (!settings.customBangs || settings.customBangs.length === 0) {
-    return defaultBangs;
-  }
-
-  // Create a map of custom bangs by trigger for quick lookup
-  const customBangMap = new Map<string, BangItem>();
-  settings.customBangs.forEach(bang => {
-    customBangMap.set(bang.t, bang);
-  });
-
-  // Filter out default bangs that have been overridden by custom bangs
-  const filteredDefaultBangs = defaultBangs.filter(bang => !customBangMap.has(bang.t));
-
-  // Combine the filtered default bangs with custom bangs
-  return [...filteredDefaultBangs, ...settings.customBangs];
-}
-
-/**
- * Clears the bang filter cache when settings change
- * This ensures fresh results when user adds/removes custom bangs
- */
-export function clearBangFilterCache(): void {
-  bangFilterCache.clear();
-  
-  // Also clear the worker cache if available
-  try {
-    bangWorker.clearCache();
-  } catch (error) {
-    console.warn('Failed to clear worker cache:', error);
-  }
-}
-
-/**
- * Filters and sorts bangs based on a search query
- * Now with caching for improved performance
- * 
- * @param bangs The array of bangs to filter and sort
- * @param query The search query
- * @param maxItems Maximum number of items to return
- * @returns Filtered and sorted array of bangs
- */
-export function filterAndSortBangs(
+function filterAndSortBangs(
   bangs: BangItem[], 
   query: string, 
   maxItems: number = 25
 ): BangItem[] {
   const normalizedQuery = query.toLowerCase();
   
-  // Check cache first to avoid expensive filtering
-  const cachedResults = bangFilterCache.get(normalizedQuery);
+  // Check cache first
+  const cachedResults = workerCache.get(normalizedQuery);
   if (cachedResults) {
     return cachedResults;
   }
@@ -208,8 +117,60 @@ export function filterAndSortBangs(
   // Take the top results after deduplication
   const results = deduplicated.slice(0, maxItems);
   
-  // Cache the results for future lookups
-  bangFilterCache.set(normalizedQuery, results);
+  // Cache the results
+  if (workerCache.size >= MAX_CACHE_SIZE) {
+    // Remove oldest entry (first key in the map)
+    const oldestKey = workerCache.keys().next().value;
+    if (oldestKey !== undefined) {
+      workerCache.delete(oldestKey);
+    }
+  }
+  workerCache.set(normalizedQuery, results);
   
   return results;
-} 
+}
+
+// Handle messages from the main thread
+self.onmessage = (e: MessageEvent) => {
+  const { type, query, customBangs = [] } = e.data;
+  
+  if (type === 'FILTER_BANGS') {
+    try {
+      // Combine custom bangs with default bangs
+      let combinedBangs = [...defaultBangs];
+      
+      if (customBangs.length > 0) {
+        // Create a map of custom bangs by trigger for quick lookup
+        const customBangMap = new Map<string, BangItem>();
+        customBangs.forEach((bang: BangItem) => {
+          customBangMap.set(bang.t, bang);
+        });
+  
+        // Filter out default bangs that have been overridden by custom bangs
+        const filteredDefaultBangs = defaultBangs.filter(bang => !customBangMap.has(bang.t));
+  
+        // Combine the filtered default bangs with custom bangs
+        combinedBangs = [...filteredDefaultBangs, ...customBangs];
+      }
+      
+      // Filter bangs based on query
+      const filteredBangs = filterAndSortBangs(combinedBangs, query);
+      
+      // Return results to main thread
+      self.postMessage({
+        type: 'FILTER_RESULTS',
+        results: filteredBangs,
+        query: query
+      });
+    } catch (error) {
+      self.postMessage({
+        type: 'ERROR',
+        error: String(error),
+        query: query
+      });
+    }
+  } else if (type === 'CLEAR_CACHE') {
+    workerCache.clear();
+    self.postMessage({ type: 'CACHE_CLEARED' });
+  }
+}; 

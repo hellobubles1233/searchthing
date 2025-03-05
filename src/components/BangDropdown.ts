@@ -83,35 +83,39 @@ export class BangDropdown {
     }
   }
   
+  /**
+   * Shows the dropdown with filtered bang items
+   * @param query Search query to filter bangs
+   */
   public show(query: string): void {
-    // Get combined bangs (default + custom)
-    const settings = loadSettings();
-    const combinedBangs = getCombinedBangs(settings);
-    
-    // Use the new utility function to filter and sort bangs
-    this.filteredBangs = filterAndSortBangs(combinedBangs, query, this.options.maxItems);
-    
-    if (this.filteredBangs.length === 0) {
-      this.hide();
-      return;
-    }
-    
-    // Create dropdown container if it doesn't exist
+    // Ensure we have a container
     this.ensureContainer();
     
     if (!this.container) return;
     
-    // Clear previous content
-    this.container.innerHTML = '';
-    this.selectedIndex = -1;
+    // Make sure the container is visible
+    this.container.style.display = 'block';
+    this.isVisible = true;
     
-    // Create dropdown items
-    this.filteredBangs.forEach((bang, index) => {
-      const item = this.createBangItem(bang);
-      this.container?.appendChild(item);
-    });
+    // If there's no query, show a helpful message
+    if (!query) {
+      this.container.innerHTML = `
+        <div class="py-3 px-4 text-white/50 text-center italic text-sm">
+          Start typing to search for bangs...
+        </div>
+      `;
+      return;
+    }
     
-    // Show dropdown with purple gradient background
+    // Filter and sort the bangs based on the query
+    const settings = loadSettings();
+    const combinedBangs = getCombinedBangs(settings);
+    this.filteredBangs = filterAndSortBangs(combinedBangs, query, this.options.maxItems);
+    
+    // Populate the dropdown
+    this.populateDropdown();
+    
+    // Position and style the dropdown
     if (this.container) {
       // If using fixed positioning, update position based on current input position
       if (this.options.positionStyle === 'fixed' && this.options.appendTo) {
@@ -121,13 +125,77 @@ export class BangDropdown {
         this.container.style.top = `${rect.bottom + 2}px`; // Adding small offset
       }
       
-      this.container.style.display = 'block';
       this.container.style.background = 'linear-gradient(to bottom, rgba(45, 0, 30, 0.9), rgba(0, 0, 0, 0.95))';
-      this.isVisible = true;
       
       // Disable interactions with footer elements while dropdown is visible
       this.disableFooterInteractions(true);
     }
+  }
+  
+  /**
+   * Directly sets the filtered bangs array
+   * This allows external components (like workers) to pre-filter bangs
+   * @param filteredBangs Pre-filtered array of bang items
+   */
+  public setFilteredBangs(filteredBangs: BangItem[]): void {
+    this.filteredBangs = filteredBangs;
+    
+    if (this.isVisible && this.container) {
+      this.populateDropdown();
+    }
+  }
+  
+  /**
+   * Populates the dropdown with the current filtered bangs
+   */
+  private populateDropdown(): void {
+    if (!this.container) return;
+    
+    // Clear the container
+    this.container.innerHTML = '';
+    
+    // Reset selected index
+    this.selectedIndex = -1;
+    
+    // If no results, show a message
+    if (this.filteredBangs.length === 0) {
+      this.container.innerHTML = `
+        <div class="py-3 px-4 text-white/50 text-center italic text-sm">
+          No matching bangs found
+        </div>
+      `;
+      return;
+    }
+    
+    // Create a container for the bang items
+    const resultsContainer = createElement('div', {
+      className: 'overflow-y-auto',
+      style: {
+        maxHeight: this.options.maxHeight
+      }
+    });
+    
+    // Add each bang item to the results container
+    this.filteredBangs.forEach((bang, index) => {
+      const bangItem = this.createBangItem(bang);
+      
+      // Add click handler
+      bangItem.addEventListener('click', () => {
+        this.selectedIndex = index;
+        this.selectCurrent();
+      });
+      
+      // Add hover handler
+      bangItem.addEventListener('mouseenter', () => {
+        this.selectedIndex = index;
+        this.navigate(0); // Refresh selected state without changing index
+      });
+      
+      resultsContainer.appendChild(bangItem);
+    });
+    
+    // Add the results container to the dropdown
+    this.container.appendChild(resultsContainer);
   }
   
   public hide(): void {

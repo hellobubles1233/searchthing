@@ -6,6 +6,7 @@ import { getUrlParameters } from "../utils/redirect";
 import { CustomBangManager } from "./CustomBangManager";
 import { getCombinedBangs } from "../utils/bangUtils";
 import { BangItem } from "../types/BangItem";
+import { bangWorker } from "../utils/workerUtils";
 
 export class SearchForm {
   private container: HTMLDivElement;
@@ -20,6 +21,9 @@ export class SearchForm {
   constructor() {
     // Load user settings
     this.settings = loadSettings();
+    
+    // Initialize the bang worker
+    bangWorker.init();
     
     // Create search container with Tailwind classes - improved styling
     this.container = createElement('div', { 
@@ -139,8 +143,17 @@ export class SearchForm {
       onSelectBang: (bangText) => this.handleBangSelection(bangText)
     });
     
+    // Add loading state indicator
+    const loadingIndicator = createElement('div', {
+      className: 'absolute right-14 top-1/2 transform -translate-y-1/2 opacity-0 transition-opacity duration-200',
+    });
+    const spinner = createElement('div', {
+      className: 'w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin'
+    });
+    loadingIndicator.appendChild(spinner);
+    
     // Assemble the search components
-    inputWrapper.append(this.searchInput, searchButton);
+    inputWrapper.append(this.searchInput, searchButton, loadingIndicator);
     this.form.appendChild(inputWrapper);
     
     // Create search info badges - improved appearance
@@ -212,6 +225,31 @@ export class SearchForm {
   }
   
   private setupBangAutocomplete(): void {
+    // Get the existing loading indicator
+    const inputWrapper = this.form.querySelector('div');
+    const loadingIndicator = inputWrapper?.querySelector('div:last-child') as HTMLDivElement;
+    
+    // Remove the duplicate loading indicator we created earlier
+    if (loadingIndicator) {
+      const lastChild = inputWrapper?.lastChild;
+      if (lastChild && lastChild !== loadingIndicator && lastChild !== this.searchInput) {
+        inputWrapper?.removeChild(lastChild);
+      }
+    }
+    
+    // The function to update the UI when results are ready
+    const updateBangDropdown = (bangQuery: string, hasDirectMatch = false) => {
+      // Null check before using bangDropdown
+      if (this.bangDropdown) {
+        this.bangDropdown.show(bangQuery);
+      }
+      
+      // Hide loading indicator
+      if (loadingIndicator) {
+        loadingIndicator.style.opacity = '0';
+      }
+    };
+    
     this.searchInput.addEventListener("input", debounce(() => {
       const inputValue = this.searchInput.value;
       const bangMatch = inputValue.match(/!([a-zA-Z0-9]*)$/);
@@ -219,25 +257,45 @@ export class SearchForm {
       if (bangMatch) {
         const bangQuery = bangMatch[1].toLowerCase();
         
-        // Try to match the current input with combined bangs from utils function
+        // Only process if there's an actual query
         if (bangQuery.length > 0) {
-          // Import the function at the top level, not from this
-          const combinedBangs = getCombinedBangs(this.settings);
-          const directMatch = combinedBangs.find((b: BangItem) => b.t.toLowerCase() === bangQuery);
-          if (directMatch) {
-            // Store the match for use when form is submitted
-            this.selectedBangItem = directMatch;
+          // Show loading indicator
+          if (loadingIndicator) {
+            loadingIndicator.style.opacity = '1';
           }
-        }
-        
-        // Null check before using bangDropdown
-        if (this.bangDropdown) {
-          this.bangDropdown.show(bangQuery);
+          
+          // Use the worker to process the bang query
+          bangWorker.filterBangs(
+            bangQuery,
+            this.settings.customBangs,
+            (filteredBangs) => {
+              // Check for direct match
+              const directMatch = filteredBangs.find(b => b.t.toLowerCase() === bangQuery);
+              if (directMatch) {
+                // Store the match for use when form is submitted
+                this.selectedBangItem = directMatch;
+              }
+              
+              // Update the dropdown with the filtered results
+              if (this.bangDropdown) {
+                this.bangDropdown.setFilteredBangs(filteredBangs);
+                updateBangDropdown(bangQuery, !!directMatch);
+              }
+            }
+          );
+        } else {
+          // If the query is empty, still show the dropdown
+          updateBangDropdown(bangQuery);
         }
       } else {
         // Null check before using bangDropdown
         if (this.bangDropdown) {
           this.bangDropdown.hide();
+        }
+        
+        // Hide loading indicator
+        if (loadingIndicator) {
+          loadingIndicator.style.opacity = '0';
         }
       }
     }, 150)); // 150ms debounce delay
