@@ -15,6 +15,7 @@ export class BangSuggestionManager {
   private selectedBangItem: BangItem | null = null;
   private options: BangSuggestionOptions;
   private loadingIndicator: HTMLDivElement | null = null;
+  private filteredBangs: BangItem[] = [];
   
   constructor(
     inputElement: HTMLInputElement, 
@@ -79,7 +80,16 @@ export class BangSuggestionManager {
             this.settings.customBangs,
             (filteredBangs) => {
               // Check for direct match
-              const directMatch = filteredBangs.find(b => b.t.toLowerCase() === bangQuery);
+              const directMatch = filteredBangs.find(b => {
+                // Handle both string and array triggers
+                if (typeof b.t === 'string') {
+                  return b.t.toLowerCase() === bangQuery;
+                } else if (Array.isArray(b.t)) {
+                  return b.t.some(trigger => trigger.toLowerCase() === bangQuery);
+                }
+                return false;
+              });
+              
               if (directMatch) {
                 // Store the match for use when form is submitted
                 this.selectedBangItem = directMatch;
@@ -87,6 +97,7 @@ export class BangSuggestionManager {
               
               // Update the dropdown with the filtered results
               if (this.bangDropdown) {
+                this.filteredBangs = filteredBangs;
                 this.bangDropdown.setFilteredBangs(filteredBangs);
                 this.updateBangDropdown(bangQuery, !!directMatch);
               }
@@ -109,7 +120,7 @@ export class BangSuggestionManager {
       }
     }, 150)); // 150ms debounce delay
     
-    // Handle keyboard navigation in dropdown
+    // Handle keyboard navigation in dropdown - use capturing phase to ensure this handler runs first
     this.inputElement.addEventListener("keydown", (e) => {
       // Null check before using bangDropdown
       if (!this.bangDropdown) return;
@@ -117,47 +128,43 @@ export class BangSuggestionManager {
       // Only handle special keys if dropdown is visible, except for Enter which should submit if no dropdown
       const isDropdownVisible = this.bangDropdown.isDropdownVisible();
       
-      switch (e.key) {
-        case "ArrowDown":
-          if (isDropdownVisible) {
+      if (isDropdownVisible) {
+        switch (e.key) {
+          case "ArrowDown":
             e.preventDefault();
             this.bangDropdown.navigateDown();
-          }
-          break;
-        case "ArrowUp":
-          if (isDropdownVisible) {
+            break;
+          case "ArrowUp":
             e.preventDefault();
             this.bangDropdown.navigateUp();
-          }
-          break;
-        case "Tab":
-          if (isDropdownVisible && this.bangDropdown.getSelectedIndex() >= 0) {
-            e.preventDefault();
-            
-            // If an item is selected, use that one, otherwise select the first item
-            if (this.bangDropdown.getSelectedIndex() >= 0) {
-              this.bangDropdown.selectCurrent();
-            } else {
-              this.bangDropdown.selectTopOption();
+            break;
+          case "Tab":
+            if (this.filteredBangs.length > 0) {
+              e.preventDefault();
+              
+              // If an item is selected, use that one, otherwise select the first item
+              if (this.bangDropdown.getSelectedIndex() >= 0) {
+                this.bangDropdown.selectCurrent();
+              } else {
+                this.bangDropdown.selectTopOption();
+              }
             }
-          }
-          break;
-        case "Enter":
-          if (isDropdownVisible && this.bangDropdown.getSelectedIndex() >= 0) {
-            // Only prevent default if an item is actively selected
-            e.preventDefault();
-            this.bangDropdown.selectCurrent();
-          }
-          // Otherwise, let the form submit naturally
-          break;
-        case "Escape":
-          if (isDropdownVisible) {
+            break;
+          case "Enter":
+            if (this.bangDropdown.getSelectedIndex() >= 0) {
+              // Only prevent default if an item is actively selected
+              e.preventDefault();
+              this.bangDropdown.selectCurrent();
+            }
+            // Otherwise, let the form submit naturally
+            break;
+          case "Escape":
             e.preventDefault();
             this.bangDropdown.hide();
-          }
-          break;
+            break;
+        }
       }
-    });
+    }, true); // Use capturing phase for highest priority
   }
   
   private updateBangDropdown(bangQuery: string, hasDirectMatch = false): void {

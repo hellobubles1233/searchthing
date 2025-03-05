@@ -188,8 +188,42 @@ export class BangDropdown {
       
       // Add hover handler
       bangItem.addEventListener('mouseenter', () => {
+        // Store previous selected index
+        const prevIndex = this.selectedIndex;
+        
+        // Update selected index
         this.selectedIndex = index;
-        this.navigate(0); // Refresh selected state without changing index
+        
+        // Remove highlight from previous item if it's different
+        if (prevIndex >= 0 && prevIndex !== index && prevIndex < this.filteredBangs.length) {
+          const items = this.container?.querySelector('.overflow-y-auto')?.querySelectorAll('.cursor-pointer');
+          if (items && prevIndex < items.length) {
+            items[prevIndex].classList.remove('bg-[#3a0082]/80');
+            items[prevIndex].classList.remove('border-l-4');
+            items[prevIndex].classList.remove('border-[#3a86ff]');
+            items[prevIndex].classList.remove('pl-1');
+          }
+        }
+        
+        // Highlight current item
+        bangItem.classList.add('bg-[#3a0082]/80');
+      });
+      
+      // Add mouseleave handler to handle hover state properly
+      bangItem.addEventListener('mouseleave', () => {
+        // Only remove highlight if we're not navigating with keyboard
+        // We'll know we're using keyboard if the selectedIndex changes after this
+        const currentIndex = this.selectedIndex;
+        
+        // Use setTimeout to allow any keyboard navigation to happen first
+        setTimeout(() => {
+          if (this.selectedIndex === currentIndex) {
+            // If selectedIndex is still the same, we're not navigating with keyboard
+            // So we can remove the highlight and reset selectedIndex
+            bangItem.classList.remove('bg-[#3a0082]/80');
+            this.selectedIndex = -1;
+          }
+        }, 50);
       });
       
       resultsContainer.appendChild(bangItem);
@@ -201,6 +235,20 @@ export class BangDropdown {
   
   public hide(): void {
     if (this.container) {
+      // Clear all highlights before hiding
+      const highlightedItems = this.container.querySelectorAll('.bg-[#3a0082]/80');
+      highlightedItems.forEach(item => {
+        item.classList.remove('bg-[#3a0082]/80');
+      });
+      
+      // Clear all border styles
+      const borderedItems = this.container.querySelectorAll('.border-l-4');
+      borderedItems.forEach(item => {
+        item.classList.remove('border-l-4');
+        item.classList.remove('border-[#3a86ff]');
+        item.classList.remove('pl-1');
+      });
+      
       this.container.style.display = 'none';
       this.isVisible = false;
       this.selectedIndex = -1;
@@ -232,23 +280,35 @@ export class BangDropdown {
   private navigate(direction: number): void {
     if (!this.container) return;
     
-    const items = this.container.querySelectorAll('div[class*="px-4 py-3"]');
+    // Updated selector to match the actual bang items created in createBangItem method
+    const resultsContainer = this.container.querySelector('.overflow-y-auto');
+    if (!resultsContainer) return;
+    
+    const items = resultsContainer.querySelectorAll('.cursor-pointer');
     if (items.length === 0) return;
     
     // Calculate new index
     const newIndex = Math.max(0, Math.min(items.length - 1, this.selectedIndex + direction));
     
-    // Remove highlight from previous item
-    if (this.selectedIndex >= 0 && this.selectedIndex < items.length) {
-      items[this.selectedIndex].classList.remove('bg-[#2a004d]/70');
-    }
+    // Clear all highlights and custom styles first
+    items.forEach(item => {
+      item.classList.remove('bg-[#3a0082]/80');
+      item.classList.remove('border-l-4');
+      item.classList.remove('border-[#3a86ff]');
+      item.classList.remove('pl-1'); // Remove extra padding
+    });
     
-    // Highlight new item
-    items[newIndex].classList.add('bg-[#2a004d]/70');
+    // Highlight new item with a more prominent color and border to override hover effect
+    const selectedItem = items[newIndex] as HTMLElement;
+    selectedItem.classList.add('bg-[#3a0082]/80');
+    selectedItem.classList.add('border-l-4');
+    selectedItem.classList.add('border-[#3a86ff]');
+    selectedItem.classList.add('pl-1');
+    
     this.selectedIndex = newIndex;
     
     // Scroll item into view if needed
-    (items[newIndex] as HTMLElement).scrollIntoView({
+    selectedItem.scrollIntoView({
       block: 'nearest',
       behavior: 'smooth'
     });
@@ -331,12 +391,6 @@ export class BangDropdown {
         item.append(aliasesRow);
       }
     }
-    
-    // Add click event to select the bang
-    item.addEventListener('click', () => {
-      // Use the current trigger
-      this.selectBang(String(bang.t));
-    });
     
     return item;
   }
