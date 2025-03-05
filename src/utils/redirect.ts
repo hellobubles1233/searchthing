@@ -8,8 +8,21 @@ const userSettings = loadSettings();
 const combinedBangs = getCombinedBangs(userSettings);
 
 // Get default bang from settings module
-const defaultBang = combinedBangs.find((b) => b.t === userSettings.defaultBang) || 
-  combinedBangs.find((b) => b.t === "g"); // Fallback to Google if not found
+const defaultBang = combinedBangs.find((b) => {
+  // Handle both string and array triggers
+  if (Array.isArray(b.t)) {
+    return b.t.some(trigger => trigger === userSettings.defaultBang);
+  } else {
+    return b.t === userSettings.defaultBang;
+  }
+}) || combinedBangs.find((b) => {
+  // Fallback to Google if not found
+  if (Array.isArray(b.t)) {
+    return b.t.includes("g");
+  } else {
+    return b.t === "g";
+  }
+});
 
 /**
  * Array of recursive function jokes
@@ -81,7 +94,16 @@ export function getBangRedirectUrl(): string | null {
   const latestSettings = loadSettings();
   const latestCombinedBangs = getCombinedBangs(latestSettings);
   
-  const selectedBang = latestCombinedBangs.find((b) => b.t === bangCandidate) ?? defaultBang;
+  // Find bang by checking if the bangCandidate matches any trigger in the bang
+  // This handles both string and array triggers
+  const selectedBang = latestCombinedBangs.find((b) => {
+    if (Array.isArray(b.t)) {
+      return b.t.some(trigger => trigger.toLowerCase() === bangCandidate);
+    } else {
+      return b.t.toLowerCase() === bangCandidate;
+    }
+  }) ?? defaultBang;
+  
   console.log("Selected bang:", selectedBang?.t);
 
   // Remove the first bang from the query

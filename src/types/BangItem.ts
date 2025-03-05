@@ -9,4 +9,5 @@ export interface BangItem {
   sc?: string; // subcategory (optional)
   r: number;   // relevance score
   u: string;   // url pattern
+  __originalT?: string[]; // original trigger array for display purposes
 } 

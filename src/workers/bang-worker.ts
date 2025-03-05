@@ -10,7 +10,12 @@ const MAX_CACHE_SIZE = 50;
  */
 function bangMatchesQuery(bang: BangItem, query: string): boolean {
   const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
-  return triggers.some(trigger => trigger.toLowerCase().includes(query));
+  // Check if any trigger includes the query (for searching in the trigger)
+  // OR if the query includes any trigger (for searching a specific trigger)
+  return triggers.some(trigger => 
+    trigger.toLowerCase().includes(query) || 
+    query.includes(trigger.toLowerCase())
+  );
 }
 
 /**
@@ -27,6 +32,37 @@ function bangExactMatchesQuery(bang: BangItem, query: string): boolean {
 function bangStartsWithQuery(bang: BangItem, query: string): boolean {
   const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
   return triggers.some(trigger => trigger.toLowerCase().startsWith(query));
+}
+
+/**
+ * Get the best matching trigger for a bang
+ */
+function getBestMatchingTrigger(bang: BangItem, query: string): string {
+  const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
+  
+  // Score function - lower is better
+  const scoreMatch = (trigger: string): number => {
+    const triggerLower = trigger.toLowerCase();
+    
+    // Exact match is best
+    if (triggerLower === query) return 0;
+    
+    // Starting with query is next best
+    if (triggerLower.startsWith(query)) return 1;
+    
+    // Query containing the trigger is next
+    if (query.includes(triggerLower)) return 2;
+    
+    // Trigger containing the query is next
+    if (triggerLower.includes(query)) return 3;
+    
+    // Otherwise, calculate a similarity score based on length difference
+    return 4 + Math.abs(triggerLower.length - query.length);
+  };
+  
+  // Sort triggers by match score and return the best one
+  return triggers
+    .sort((a, b) => scoreMatch(a) - scoreMatch(b))[0] || triggers[0];
 }
 
 /**
@@ -61,128 +97,54 @@ function filterAndSortBangs(
         bangTriggers.includes(catTrigger)
       );
     }))
-    // Sort by exact match first, then by relevance score (r property), then alphabetically
-    .sort((a, b) => {
-      // Exact match gets highest priority
-      const aExactMatch = bangExactMatchesQuery(a, normalizedQuery);
-      const bExactMatch = bangExactMatchesQuery(b, normalizedQuery);
-      if (aExactMatch && !bExactMatch) return -1;
-      if (!aExactMatch && bExactMatch) return 1;
+    // Create a copy of each bang with only its best matching trigger
+    .map(bang => {
+      const bestTrigger = getBestMatchingTrigger(bang, normalizedQuery);
+      const originalTriggers = Array.isArray(bang.t) ? bang.t : [bang.t];
       
-      // Popular services get priority
-      const popularServices = ['youtube', 'google', 'wikipedia', 'amazon', 'twitter', 'reddit'];
-      const aIsPopular = popularServices.some(service => a.s.toLowerCase().includes(service));
-      const bIsPopular = popularServices.some(service => b.s.toLowerCase().includes(service));
-      
-      if (aIsPopular && !bIsPopular) return -1;
-      if (!aIsPopular && bIsPopular) return 1;
-      
-      // Then sort by relevance score (higher r value means more relevant)
-      if (a.r !== b.r) return b.r - a.r;
-      
-      // Get best matching trigger from each bang
-      const aTriggers = Array.isArray(a.t) ? a.t : [a.t];
-      const bTriggers = Array.isArray(b.t) ? b.t : [b.t];
-      
-      // Find best matching trigger (prefer shorter triggers that start with query)
-      const aBestTrigger = aTriggers
-        .filter(t => t.toLowerCase().includes(normalizedQuery))
-        .sort((t1, t2) => {
-          const t1StartsWith = t1.toLowerCase().startsWith(normalizedQuery) ? 0 : 1;
-          const t2StartsWith = t2.toLowerCase().startsWith(normalizedQuery) ? 0 : 1;
-          if (t1StartsWith !== t2StartsWith) return t1StartsWith - t2StartsWith;
-          return t1.length - t2.length;
-        })[0] || aTriggers[0];
-        
-      const bBestTrigger = bTriggers
-        .filter(t => t.toLowerCase().includes(normalizedQuery))
-        .sort((t1, t2) => {
-          const t1StartsWith = t1.toLowerCase().startsWith(normalizedQuery) ? 0 : 1;
-          const t2StartsWith = t2.toLowerCase().startsWith(normalizedQuery) ? 0 : 1;
-          if (t1StartsWith !== t2StartsWith) return t1StartsWith - t2StartsWith;
-          return t1.length - t2.length;
-        })[0] || bTriggers[0];
-      
-      // Finally sort alphabetically by best trigger
-      return aBestTrigger.localeCompare(bBestTrigger);
+      // Store a copy with the original triggers array preserved
+      return {
+        ...bang,
+        t: bestTrigger,
+        // Store the original triggers array to be able to show aliases in dropdown
+        __originalT: originalTriggers
+      };
     });
   
-  // Combine the two lists, with category matches first
-  const combinedBangs = [...categoryMatchBangs, ...triggerMatchBangs];
-  
-  // Calculate match relevance score for each bang (lower = better match)
-  const withMatchScore = combinedBangs.map(bang => {
-    let matchScore: number;
+  // Sort the bangs with their best triggers
+  const sortedBangs = triggerMatchBangs.sort((a, b) => {
+    // Exact match gets highest priority
+    const aExactMatch = String(a.t).toLowerCase() === normalizedQuery;
+    const bExactMatch = String(b.t).toLowerCase() === normalizedQuery;
+    if (aExactMatch && !bExactMatch) return -1;
+    if (!aExactMatch && bExactMatch) return 1;
     
-    // If this is a category match, give it the best possible score
-    if (bang.c && bang.c.toLowerCase() === normalizedQuery) {
-      matchScore = -1; // Even better than exact trigger match
-    }
-    // If any bang.t exactly equals query, next best score
-    else if (bangExactMatchesQuery(bang, normalizedQuery)) {
-      matchScore = 0;
-    } 
-    // If any bang.t starts with query, next best score
-    else if (bangStartsWithQuery(bang, normalizedQuery)) {
-      matchScore = 1;
-    }
-    // Otherwise, use a simple distance measure
-    else {
-      // Get the best matching trigger
-      const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
-      let bestDistance = Infinity;
-      
-      for (const trigger of triggers) {
-        // Simple character-based difference (higher = less similar)
-        const queryLen = query.length;
-        const triggerLen = trigger.length;
-        const distance = 2 + Math.abs(triggerLen - queryLen);
-        
-        if (distance < bestDistance) {
-          bestDistance = distance;
-        }
-      }
-      
-      matchScore = bestDistance;
-    }
+    // Starting with query gets next priority
+    const aStartsWith = String(a.t).toLowerCase().startsWith(normalizedQuery);
+    const bStartsWith = String(b.t).toLowerCase().startsWith(normalizedQuery);
+    if (aStartsWith && !bStartsWith) return -1;
+    if (!aStartsWith && bStartsWith) return 1;
     
-    return {
-      bang,
-      matchScore
-    };
+    // Popular services get priority
+    const popularServices = ['youtube', 'google', 'wikipedia', 'amazon', 'twitter', 'reddit'];
+    const aIsPopular = popularServices.some(service => a.s.toLowerCase().includes(service));
+    const bIsPopular = popularServices.some(service => b.s.toLowerCase().includes(service));
+    
+    if (aIsPopular && !bIsPopular) return -1;
+    if (!aIsPopular && bIsPopular) return 1;
+    
+    // Then sort by relevance score (higher r value means more relevant)
+    if (a.r !== b.r) return b.r - a.r;
+    
+    // Finally sort alphabetically by the trigger
+    return String(a.t).localeCompare(String(b.t));
   });
   
-  // Deduplicate by service name, keeping the best match for each service
-  const deduplicated: BangItem[] = [];
-  const seenServices = new Set<string>();
+  // Combine the category matches with the sorted trigger matches
+  const combinedBangs = [...categoryMatchBangs, ...sortedBangs];
   
-  for (const item of withMatchScore) {
-    // Normalize service name for comparison
-    const serviceName = item.bang.s.toLowerCase();
-    
-    // If we haven't seen this service yet, add it
-    if (!seenServices.has(serviceName)) {
-      seenServices.add(serviceName);
-      deduplicated.push(item.bang);
-    } 
-    // If we have seen it, check if this bang is a better match
-    else {
-      // Find the existing bang for this service
-      const existingIndex = deduplicated.findIndex(b => b.s.toLowerCase() === serviceName);
-      if (existingIndex >= 0) {
-        // Find the match score for the existing bang
-        const existingScore = withMatchScore.find(ws => ws.bang === deduplicated[existingIndex])?.matchScore;
-        
-        // If this bang has a better match score, replace the existing one
-        if (existingScore !== undefined && item.matchScore < existingScore) {
-          deduplicated[existingIndex] = item.bang;
-        }
-      }
-    }
-  }
-  
-  // Take the top results after deduplication
-  const results = deduplicated.slice(0, maxItems);
+  // Take the top results
+  const results = combinedBangs.slice(0, maxItems);
   
   // Cache the results
   if (workerCache.size >= MAX_CACHE_SIZE) {

@@ -112,24 +112,49 @@ export class BangSuggestionManager {
     // Handle keyboard navigation in dropdown
     this.inputElement.addEventListener("keydown", (e) => {
       // Null check before using bangDropdown
-      if (!this.bangDropdown || !this.bangDropdown.isDropdownVisible()) return;
+      if (!this.bangDropdown) return;
+      
+      // Only handle special keys if dropdown is visible, except for Enter which should submit if no dropdown
+      const isDropdownVisible = this.bangDropdown.isDropdownVisible();
       
       switch (e.key) {
         case "ArrowDown":
-          e.preventDefault();
-          this.bangDropdown.navigateDown();
+          if (isDropdownVisible) {
+            e.preventDefault();
+            this.bangDropdown.navigateDown();
+          }
           break;
         case "ArrowUp":
-          e.preventDefault();
-          this.bangDropdown.navigateUp();
+          if (isDropdownVisible) {
+            e.preventDefault();
+            this.bangDropdown.navigateUp();
+          }
           break;
         case "Tab":
+          if (isDropdownVisible && this.bangDropdown.getSelectedIndex() >= 0) {
+            e.preventDefault();
+            
+            // If an item is selected, use that one, otherwise select the first item
+            if (this.bangDropdown.getSelectedIndex() >= 0) {
+              this.bangDropdown.selectCurrent();
+            } else {
+              this.bangDropdown.selectTopOption();
+            }
+          }
+          break;
         case "Enter":
-          e.preventDefault();
-          this.bangDropdown.selectCurrent();
+          if (isDropdownVisible && this.bangDropdown.getSelectedIndex() >= 0) {
+            // Only prevent default if an item is actively selected
+            e.preventDefault();
+            this.bangDropdown.selectCurrent();
+          }
+          // Otherwise, let the form submit naturally
           break;
         case "Escape":
-          this.bangDropdown.hide();
+          if (isDropdownVisible) {
+            e.preventDefault();
+            this.bangDropdown.hide();
+          }
           break;
       }
     });

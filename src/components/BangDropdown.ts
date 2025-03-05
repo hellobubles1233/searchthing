@@ -77,11 +77,10 @@ export class BangDropdown {
   }
   
   // Add method to select the top option
-  private selectTopOption(): void {
+  public selectTopOption(): void {
     if (this.filteredBangs.length > 0) {
       const bang = this.filteredBangs[0];
-      const trigger = Array.isArray(bang.t) && bang.t.length > 0 ? bang.t[0] : String(bang.t);
-      this.selectBang(trigger);
+      this.selectBang(String(bang.t));
     }
   }
   
@@ -222,8 +221,7 @@ export class BangDropdown {
   public selectCurrent(): void {
     if (this.selectedIndex >= 0 && this.selectedIndex < this.filteredBangs.length) {
       const bang = this.filteredBangs[this.selectedIndex];
-      const trigger = Array.isArray(bang.t) && bang.t.length > 0 ? bang.t[0] : String(bang.t);
-      this.selectBang(trigger);
+      this.selectBang(String(bang.t));
     }
   }
   
@@ -261,20 +259,31 @@ export class BangDropdown {
       className: 'p-2 cursor-pointer hover:bg-black/30 transition-colors rounded'
     });
     
+    // Store the original bang object
+    const originalBang = bang;
+    
+    // Get the original trigger array if available in the bang's __originalBang property
+    // This is needed to display aliases
+    let originalTriggers: string[] = [];
+    
+    // For backward compatibility, try to get the original triggers if available
+    if (Array.isArray(originalBang.__originalT)) {
+      originalTriggers = originalBang.__originalT;
+    } else if (Array.isArray(originalBang.t)) {
+      originalTriggers = originalBang.t;
+    }
+    
     // First line: Shortcut and Service name
     const titleRow = createElement('div', {
       className: 'flex items-center justify-between'
     });
     
-    // Get the primary trigger - for display purposes, we'll just show the first trigger
-    // or the shortest one that best matches the query
-    const primaryTrigger = Array.isArray(bang.t) 
-      ? (bang.t.length > 0 ? bang.t[0] : '') 
-      : bang.t;
+    // In our filtered results, t should now be a string
+    const triggerText = String(bang.t);
     
     const shortcut = createElement('span', {
       className: 'font-mono text-[#3a86ff] font-bold'
-    }, [`!${primaryTrigger}`]);
+    }, [`!${triggerText}`]);
     
     const service = createElement('span', {
       className: 'text-white font-medium'
@@ -297,31 +306,36 @@ export class BangDropdown {
     
     detailRow.append(website, category);
     
-    // If there are multiple triggers, show them in the third row
-    if (Array.isArray(bang.t) && bang.t.length > 1) {
-      const aliasesRow = createElement('div', {
-        className: 'text-xs text-white/40 mt-1'
-      });
+    // Always append the first two rows
+    item.append(titleRow, detailRow);
+    
+    // If there are multiple triggers in the original bang, show them as aliases
+    if (originalTriggers.length > 1) {
+      // Filter out the current trigger to avoid duplication
+      const otherTriggers = originalTriggers.filter(t => t !== triggerText);
       
-      const aliasesLabel = createElement('span', {
-        className: 'mr-1'
-      }, ['Aliases:']);
-      
-      const aliasesList = createElement('span', {
-        className: 'font-mono'
-      }, [bang.t.map(t => `!${t}`).join(', ')]);
-      
-      aliasesRow.append(aliasesLabel, aliasesList);
-      item.append(titleRow, detailRow, aliasesRow);
-    } else {
-      item.append(titleRow, detailRow);
+      if (otherTriggers.length > 0) {
+        const aliasesRow = createElement('div', {
+          className: 'text-xs text-white/40 mt-1'
+        });
+        
+        const aliasesLabel = createElement('span', {
+          className: 'mr-1'
+        }, ['Aliases:']);
+        
+        const aliasesList = createElement('span', {
+          className: 'font-mono'
+        }, [otherTriggers.map(t => `!${t}`).join(', ')]);
+        
+        aliasesRow.append(aliasesLabel, aliasesList);
+        item.append(aliasesRow);
+      }
     }
     
     // Add click event to select the bang
     item.addEventListener('click', () => {
-      // For selection, always use a string
-      const trigger = Array.isArray(bang.t) && bang.t.length > 0 ? bang.t[0] : String(bang.t);
-      this.selectBang(trigger);
+      // Use the current trigger
+      this.selectBang(String(bang.t));
     });
     
     return item;
@@ -423,5 +437,9 @@ export class BangDropdown {
     // Clear references
     this.container = null;
     this.filteredBangs = [];
+  }
+  
+  public getSelectedIndex(): number {
+    return this.selectedIndex;
   }
 } 
