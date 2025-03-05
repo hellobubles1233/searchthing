@@ -1,22 +1,21 @@
-import { createElement, debounce } from "../utils/dom";
-import { BangDropdown } from "./BangDropdown";
+import { createElement } from "../utils/dom";
 import { SettingsModal } from "./SettingsModal";
 import { loadSettings, UserSettings } from "../utils/settings";
 import { getUrlParameters } from "../utils/redirect";
 import { CustomBangManager } from "./CustomBangManager";
-import { getCombinedBangs } from "../utils/bangUtils";
-import { BangItem } from "../types/BangItem";
 import { bangWorker } from "../utils/workerUtils";
+import { SearchInputComponent } from "./SearchInputComponent";
+import { SearchInfoComponent, BangExample } from "./SearchInfoComponent";
+import { BangSuggestionManager } from "./BangSuggestionManager";
 
 export class SearchForm {
   private container: HTMLDivElement;
-  private form: HTMLFormElement;
-  private searchInput: HTMLInputElement;
-  private bangDropdown: BangDropdown | null = null;
   private settingsModal: SettingsModal;
   private customBangManager: CustomBangManager;
   private settings: UserSettings;
-  private selectedBangItem: any;
+  private searchInput: SearchInputComponent;
+  private searchInfo: SearchInfoComponent;
+  private bangSuggestionManager: BangSuggestionManager | null = null;
   
   constructor() {
     // Load user settings
@@ -25,12 +24,12 @@ export class SearchForm {
     // Initialize the bang worker
     bangWorker.init();
     
-    // Create search container with Tailwind classes - improved styling
+    // Create search container with Tailwind classes
     this.container = createElement('div', { 
       className: 'w-full mt-10 pt-6 border-t border-white/10 relative' 
     });
     
-    // Check if this is a recursive query - use custom function for URL parameters
+    // Check if this is a recursive query
     const urlParams = getUrlParameters();
     const isRecursive = urlParams.get("recursive") === "true";
     const query = urlParams.get("q");
@@ -60,9 +59,8 @@ export class SearchForm {
       // Update local settings when custom bangs change
       this.settings = newSettings;
       
-      // Re-initialize bang dropdown when settings change
-      // This ensures the dropdown works properly after deleting a custom bang
-      this.reinitializeBangDropdown();
+      // Re-initialize bang suggestion manager when settings change
+      this.reinitializeBangSuggestionManager();
     });
     
     // Add click event for custom bangs button
@@ -101,104 +99,12 @@ export class SearchForm {
     // Add buttons container to heading
     searchHeading.appendChild(buttonsContainer);
     
-    // Create search form with Tailwind classes - integrated design
-    this.form = createElement('form', { 
-      id: 'search-form', 
-      className: 'flex flex-col mt-4 mb-4' 
-    });
-    
-    // Create input wrapper with integrated search button
-    const inputWrapper = createElement('div', {
-      className: 'relative w-full'
-    });
-    
-    // Create clickable ReBang logo on the right that acts as a submit button
-    const searchButton = createElement('button', {
-      type: 'submit',
-      className: 'absolute right-4 top-1/2 transform -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-transparent hover:scale-110 active:scale-95 transition-all outline-none focus:outline-none focus:ring-0 z-10'
-    });
-    
-    // Add the ReBang logo with shadow and no background
-    const logoImg = createElement('img', {
-      src: '/ReBangLogo.png', // Using PNG for transparency
-      alt: 'Search',
-      style: 'transform: rotate(-60deg)',
-      className: 'w-8 h-8 filter drop-shadow-[0_2px_3px_rgba(0,0,0,0.7)]'
-    });
-    
-    searchButton.appendChild(logoImg);
-    
-    // Create search input with Tailwind classes - adjusted padding for right logo
-    this.searchInput = createElement('input', {
-      type: 'text',
-      placeholder: 'Type your search query or !bang search',
-      className: 'w-full px-4 py-3 pr-14 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded-xl border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white shadow-lg',
-      autocomplete: 'off',
-      spellcheck: 'false',
-      autocapitalize: 'off'
-    });
-    
-    // Initialize the bang dropdown early
-    this.bangDropdown = new BangDropdown(this.searchInput, {
-      onSelectBang: (bangText) => this.handleBangSelection(bangText)
-    });
-    
-    // Add loading state indicator
-    const loadingIndicator = createElement('div', {
-      className: 'absolute right-14 top-1/2 transform -translate-y-1/2 opacity-0 transition-opacity duration-200',
-    });
-    const spinner = createElement('div', {
-      className: 'w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin'
-    });
-    loadingIndicator.appendChild(spinner);
-    
-    // Assemble the search components
-    inputWrapper.append(this.searchInput, searchButton, loadingIndicator);
-    this.form.appendChild(inputWrapper);
-    
-    // Create search info badges - improved appearance
-    const searchInfo = createElement('div', {
-      className: 'flex flex-wrap gap-2 mt-3 justify-center' 
-    });
-    
-    // Search examples that visually explain bang syntax
-    const examples = [
-      { name: '!g', desc: 'Google' },
-      { name: '!yt', desc: 'YouTube' },
-      { name: '!w', desc: 'Wikipedia' },
-      { name: "!gh", desc: "GitHub"}
-    ];
-    
-    examples.forEach(ex => {
-      const badge = createElement('span', {
-        className: 'inline-flex items-center px-2 py-1 rounded-full bg-white/10 text-white/70 text-xs backdrop-blur-sm transition-all hover:bg-white/20 cursor-help'
-      }, [`${ex.name} (${ex.desc})`]);
-      
-      searchInfo.appendChild(badge);
-    });
-    
-    // Add search heading, form, and info to search container
-    this.container.append(searchHeading, this.form, searchInfo);
-    
-    // Add event listener for form submission
-    this.form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      let query = this.searchInput.value.trim();
-      
-      // If no bang is specified and a default bang is set, prepend it
-      if (!query.includes('!') && this.settings.defaultBang) {
-        query = `!${this.settings.defaultBang} ${query}`;
-      }
-      
-      if (query) {
-        // Add loading state to button when form is submitted
-        const button = this.form.querySelector('button');
-        if (button) {
-          // Replace the icon with a spinner
-          button.innerHTML = '<span class="animate-spin text-white">↻</span>';
-          button.disabled = true;
-        }
-        
+    // Create and initialize the search input component
+    this.searchInput = new SearchInputComponent(this.settings, {
+      onInput: (value) => {
+        // Input events will be handled by the bang suggestion manager
+      },
+      onSubmit: (query) => {
         // Create a loading overlay to prevent white flash
         const loadingOverlay = createElement('div', {
           className: 'fixed inset-0 bg-[#000] bg-opacity-90 z-50 flex items-center justify-center',
@@ -220,125 +126,51 @@ export class SearchForm {
       }
     });
     
-    // Add event listeners for bang autocomplete
-    this.setupBangAutocomplete();
+    // Create and initialize the search info component
+    const examples: BangExample[] = [
+      { name: '!g', desc: 'Google' },
+      { name: '!yt', desc: 'YouTube' },
+      { name: '!w', desc: 'Wikipedia' },
+      { name: '!gh', desc: 'GitHub' }
+    ];
+    this.searchInfo = new SearchInfoComponent(examples);
+    
+    // Add search heading, form, and info to search container
+    this.container.append(
+      searchHeading, 
+      this.searchInput.getElement(),
+      this.searchInfo.getElement()
+    );
+    
+    // Initialize the bang suggestion manager
+    this.initializeBangSuggestionManager();
   }
   
-  private setupBangAutocomplete(): void {
-    // Get the existing loading indicator
-    const inputWrapper = this.form.querySelector('div');
-    const loadingIndicator = inputWrapper?.querySelector('div:last-child') as HTMLDivElement;
-    
-    // Remove the duplicate loading indicator we created earlier
-    if (loadingIndicator) {
-      const lastChild = inputWrapper?.lastChild;
-      if (lastChild && lastChild !== loadingIndicator && lastChild !== this.searchInput) {
-        inputWrapper?.removeChild(lastChild);
+  private initializeBangSuggestionManager(): void {
+    // Create the bang suggestion manager
+    this.bangSuggestionManager = new BangSuggestionManager(
+      this.searchInput.getInputElement(),
+      this.settings,
+      {
+        onBangSelection: (bangText) => this.handleBangSelection(bangText)
       }
-    }
-    
-    // The function to update the UI when results are ready
-    const updateBangDropdown = (bangQuery: string, hasDirectMatch = false) => {
-      // Null check before using bangDropdown
-      if (this.bangDropdown) {
-        this.bangDropdown.show(bangQuery);
-      }
-      
-      // Hide loading indicator
-      if (loadingIndicator) {
-        loadingIndicator.style.opacity = '0';
-      }
-    };
-    
-    this.searchInput.addEventListener("input", debounce(() => {
-      const inputValue = this.searchInput.value;
-      const bangMatch = inputValue.match(/!([a-zA-Z0-9]*)$/);
-      
-      if (bangMatch) {
-        const bangQuery = bangMatch[1].toLowerCase();
-        
-        // Only process if there's an actual query
-        if (bangQuery.length > 0) {
-          // Show loading indicator
-          if (loadingIndicator) {
-            loadingIndicator.style.opacity = '1';
-          }
-          
-          // Use the worker to process the bang query
-          bangWorker.filterBangs(
-            bangQuery,
-            this.settings.customBangs,
-            (filteredBangs) => {
-              // Check for direct match
-              const directMatch = filteredBangs.find(b => b.t.toLowerCase() === bangQuery);
-              if (directMatch) {
-                // Store the match for use when form is submitted
-                this.selectedBangItem = directMatch;
-              }
-              
-              // Update the dropdown with the filtered results
-              if (this.bangDropdown) {
-                this.bangDropdown.setFilteredBangs(filteredBangs);
-                updateBangDropdown(bangQuery, !!directMatch);
-              }
-            }
-          );
-        } else {
-          // If the query is empty, still show the dropdown
-          updateBangDropdown(bangQuery);
-        }
-      } else {
-        // Null check before using bangDropdown
-        if (this.bangDropdown) {
-          this.bangDropdown.hide();
-        }
-        
-        // Hide loading indicator
-        if (loadingIndicator) {
-          loadingIndicator.style.opacity = '0';
-        }
-      }
-    }, 150)); // 150ms debounce delay
-    
-    // Handle keyboard navigation in dropdown
-    this.searchInput.addEventListener("keydown", (e) => {
-      // Null check before using bangDropdown
-      if (!this.bangDropdown || !this.bangDropdown.isDropdownVisible()) return;
-      
-      switch (e.key) {
-        case "ArrowDown":
-          e.preventDefault();
-          this.bangDropdown.navigateDown();
-          break;
-        case "ArrowUp":
-          e.preventDefault();
-          this.bangDropdown.navigateUp();
-          break;
-        case "Tab":
-        case "Enter":
-          e.preventDefault();
-          this.bangDropdown.selectCurrent();
-          break;
-        case "Escape":
-          this.bangDropdown.hide();
-          break;
-      }
-    });
+    );
   }
   
   private handleBangSelection(bangText: string): void {
-    const inputValue = this.searchInput.value;
+    const inputElement = this.searchInput.getInputElement();
+    const inputValue = inputElement.value;
     const lastBangPos = inputValue.lastIndexOf('!');
     
     if (lastBangPos >= 0) {
       // Replace the partial bang with the selected one and add a space
       const newValue = inputValue.substring(0, lastBangPos + 1) + bangText + ' ';
-      this.searchInput.value = newValue;
+      this.searchInput.setValue(newValue);
       this.searchInput.focus();
       
       // Set cursor position after the bang
       setTimeout(() => {
-        this.searchInput.selectionStart = this.searchInput.selectionEnd = newValue.length;
+        inputElement.selectionStart = inputElement.selectionEnd = newValue.length;
       }, 0);
     }
   }
@@ -349,7 +181,7 @@ export class SearchForm {
   
   public focus(): void {
     setTimeout(() => {
-      // Check if this is a recursive query - use custom function for URL parameters
+      // Check if this is a recursive query
       const urlParams = getUrlParameters();
       const isRecursive = urlParams.get("recursive") === "true";
       const query = urlParams.get("q");
@@ -359,13 +191,15 @@ export class SearchForm {
       if (isRecursive && query) {
         console.log("Filling search input with query:", query);
         // If we have a recursive query, fill the search input with it
-        this.searchInput.value = query;
+        this.searchInput.setValue(query);
+        
+        const inputElement = this.searchInput.getInputElement();
         
         // Ensure cursor is positioned at the end
-        this.searchInput.selectionStart = this.searchInput.selectionEnd = query.length;
+        inputElement.selectionStart = inputElement.selectionEnd = query.length;
         
         // Add a subtle pulse effect to the input rather than a full glow
-        this.searchInput.classList.add('recursive-input');
+        inputElement.classList.add('recursive-input');
         
         // Create and add a CSS rule for the subtle effect
         if (!document.getElementById('recursive-style')) {
@@ -391,46 +225,19 @@ export class SearchForm {
   }
   
   /**
-   * Reinitializes the bang dropdown when settings are changed
-   * This ensures the dropdown is refreshed after custom bangs are added or removed
+   * Reinitializes the bang suggestion manager when settings are changed
    */
-  private reinitializeBangDropdown(): void {
-    // Properly dispose the existing dropdown to clean up event listeners
-    if (this.bangDropdown) {
-      this.bangDropdown.dispose(); // Use the new dispose method to clean up
-      this.bangDropdown = null;
-    }
-
-    // Remove any existing event listeners from the search input
-    const oldInput = this.searchInput;
-    const parent = oldInput.parentElement;
-    
-    // Create a new input element with the same properties
-    const newInput = createElement('input', {
-      type: 'text',
-      placeholder: oldInput.placeholder,
-      className: oldInput.className,
-      autocomplete: 'off',
-      spellcheck: 'false',
-      autocapitalize: 'off',
-      value: oldInput.value
-    }) as HTMLInputElement;
-    
-    // Replace the old input with the new one
-    if (parent) {
-      parent.replaceChild(newInput, oldInput);
-      this.searchInput = newInput;
+  private reinitializeBangSuggestionManager(): void {
+    // Clean up existing bang suggestion manager
+    if (this.bangSuggestionManager) {
+      this.bangSuggestionManager.dispose();
+      this.bangSuggestionManager = null;
     }
     
-    // Reinitialize the bang dropdown with the new input
-    this.bangDropdown = new BangDropdown(this.searchInput, {
-      onSelectBang: (bangText) => this.handleBangSelection(bangText)
-    });
+    // Initialize a new bang suggestion manager
+    this.initializeBangSuggestionManager();
     
-    // Reattach event listeners to the new input
-    this.setupBangAutocomplete();
-    
-    // Focus the new input
+    // Focus the input
     this.searchInput.focus();
   }
 } 
