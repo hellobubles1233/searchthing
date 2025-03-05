@@ -22,7 +22,7 @@ export class SearchHeaderComponent {
     // Create a heading that shows when in recursive mode and normal mode
     this.heading = createElement('h2', {
       className: 'text-white text-2xl font-light text-center tracking-wider',
-    }, [options.isRecursive ? 'Processing recursive search...' : 'Search with !Bangs']);
+    }, [options.isRecursive ? 'You found an easter egg!' : 'Search with !Bangs']);
     
     // Create buttons container for action buttons that spans full width
     this.buttonsContainer = createElement('div', {
@@ -31,10 +31,10 @@ export class SearchHeaderComponent {
     
     // Add custom bangs button on the left
     this.customBangsButton = createElement('button', {
-      className: 'text-white/50 hover:text-white/90 transition-colors px-4 py-2 rounded-full hover:bg-white/10 flex items-center text-lg'
+      className: 'text-white/50 hover:text-white/90 transition-colors px-3 py-1 rounded-full hover:bg-white/10 flex items-center'
     }, [
       'My Bangs',
-      createElement('span', { className: 'ml-2' }, ['+'])
+      createElement('span', { className: 'ml-1' }, ['+'])
     ]);
     
     // Add click event for custom bangs button
@@ -42,10 +42,19 @@ export class SearchHeaderComponent {
       this.customBangsButton.addEventListener('click', options.onCustomBangsClick);
     }
     
-    // Add settings gear icon on the right using emoji
+    // Add settings gear icon on the right using SVG
     this.settingsIcon = createElement('button', {
-      className: 'text-white/50 hover:text-white/90 transition-colors w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 text-xl'
-    }, ['⚙️']);
+      className: 'text-white/50 hover:text-white/90 transition-colors w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10'
+    });
+    
+    // Create an img element for the SVG
+    const gearIcon = createElement('img', {
+      src: '/gear-black.svg',
+      alt: 'Settings',
+      className: 'w-6 h-6 opacity-80 filter invert hover:opacity-100 transition-opacity'
+    });
+    
+    this.settingsIcon.appendChild(gearIcon);
     
     // Add click event for settings icon
     if (options.onSettingsClick) {
