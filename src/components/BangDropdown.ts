@@ -79,7 +79,9 @@ export class BangDropdown {
   // Add method to select the top option
   private selectTopOption(): void {
     if (this.filteredBangs.length > 0) {
-      this.selectBang(this.filteredBangs[0].t);
+      const bang = this.filteredBangs[0];
+      const trigger = Array.isArray(bang.t) && bang.t.length > 0 ? bang.t[0] : String(bang.t);
+      this.selectBang(trigger);
     }
   }
   
@@ -219,7 +221,9 @@ export class BangDropdown {
   
   public selectCurrent(): void {
     if (this.selectedIndex >= 0 && this.selectedIndex < this.filteredBangs.length) {
-      this.selectBang(this.filteredBangs[this.selectedIndex].t);
+      const bang = this.filteredBangs[this.selectedIndex];
+      const trigger = Array.isArray(bang.t) && bang.t.length > 0 ? bang.t[0] : String(bang.t);
+      this.selectBang(trigger);
     }
   }
   
@@ -254,7 +258,7 @@ export class BangDropdown {
   
   private createBangItem(bang: BangItem): HTMLDivElement {
     const item = createElement('div', {
-      className: 'px-4 py-3 hover:bg-[#2a004d]/70 cursor-pointer flex flex-col border-b border-white/5 last:border-b-0 transition-colors'
+      className: 'p-2 cursor-pointer hover:bg-black/30 transition-colors rounded'
     });
     
     // First line: Shortcut and Service name
@@ -262,9 +266,15 @@ export class BangDropdown {
       className: 'flex items-center justify-between'
     });
     
+    // Get the primary trigger - for display purposes, we'll just show the first trigger
+    // or the shortest one that best matches the query
+    const primaryTrigger = Array.isArray(bang.t) 
+      ? (bang.t.length > 0 ? bang.t[0] : '') 
+      : bang.t;
+    
     const shortcut = createElement('span', {
       className: 'font-mono text-[#3a86ff] font-bold'
-    }, [`!${bang.t}`]);
+    }, [`!${primaryTrigger}`]);
     
     const service = createElement('span', {
       className: 'text-white font-medium'
@@ -287,11 +297,31 @@ export class BangDropdown {
     
     detailRow.append(website, category);
     
-    item.append(titleRow, detailRow);
+    // If there are multiple triggers, show them in the third row
+    if (Array.isArray(bang.t) && bang.t.length > 1) {
+      const aliasesRow = createElement('div', {
+        className: 'text-xs text-white/40 mt-1'
+      });
+      
+      const aliasesLabel = createElement('span', {
+        className: 'mr-1'
+      }, ['Aliases:']);
+      
+      const aliasesList = createElement('span', {
+        className: 'font-mono'
+      }, [bang.t.map(t => `!${t}`).join(', ')]);
+      
+      aliasesRow.append(aliasesLabel, aliasesList);
+      item.append(titleRow, detailRow, aliasesRow);
+    } else {
+      item.append(titleRow, detailRow);
+    }
     
     // Add click event to select the bang
     item.addEventListener('click', () => {
-      this.selectBang(bang.t);
+      // For selection, always use a string
+      const trigger = Array.isArray(bang.t) && bang.t.length > 0 ? bang.t[0] : String(bang.t);
+      this.selectBang(trigger);
     });
     
     return item;

@@ -6,7 +6,7 @@ import {
   updateSetting,
   UserSettings 
 } from "../utils/settings";
-import { filterAndSortBangs, getCombinedBangs } from "../utils/bangUtils";
+import { filterAndSortBangs, getCombinedBangs, clearBangFilterCache } from "../utils/bangUtils";
 import { BangItem } from "../types/BangItem";
 import { BangDropdown } from "./BangDropdown";
 import { CustomBangManager } from "./CustomBangManager";
@@ -203,76 +203,47 @@ export class SettingsModal {
   private processAndSaveBangSetting(): void {
     if (!this.defaultBangInput) return;
     
-    let inputValue = this.defaultBangInput.value.trim();
-    console.log("Processing input value:", inputValue);
-    
-    // Get combined bangs (default + custom)
+    const inputValue = this.defaultBangInput.value || '';
     const combinedBangs = getCombinedBangs(this.settings);
     
-    // If we already have a selected bang item, use it
-    if (this.selectedBangItem) {
-      console.log("Using selected bang item:", this.selectedBangItem.t);
-      this.settings.defaultBang = this.selectedBangItem.t;
-      return;
-    }
-    
-    // Handle empty input - default to Google
+    // If the input is empty, default to Google
     if (!inputValue) {
       console.log("Empty input, defaulting to Google");
-      const googleBang = combinedBangs.find(b => b.s.toLowerCase() === 'google' && b.t === 'g');
-      if (googleBang) {
-        this.settings.defaultBang = googleBang.t;
+      const googleBang = combinedBangs.find(b => b.s.toLowerCase() === 'google' && 
+        (Array.isArray(b.t) ? b.t.includes('g') : b.t === 'g'));
+      
+      if (googleBang && this.defaultBangInput) {
+        // Get the 'g' trigger or the first one if it's an array
+        const trigger = Array.isArray(googleBang.t) 
+          ? (googleBang.t.includes('g') ? 'g' : googleBang.t[0]) 
+          : googleBang.t;
+          
+        this.settings.defaultBang = trigger;
         this.selectedBangItem = googleBang;
-        this.defaultBangInput.value = `!${googleBang.t} - ${googleBang.s}`;
+        this.defaultBangInput.value = `!${trigger} - ${googleBang.s}`;
       }
       return;
     }
     
-    // Remove exclamation point and anything after hyphen or dash
-    inputValue = inputValue.replace(/^!/, '').split(/[-–]/)[0].trim();
-    console.log("Cleaned input value:", inputValue);
+    // Parse the bang from input (format: !bang - Service Name)
+    const bangMatch = inputValue.match(/^!([^ -]+)/);
     
-    // First try direct match with bang shortcode
-    const directMatch = combinedBangs.find(b => b.t.toLowerCase() === inputValue.toLowerCase());
-    if (directMatch) {
-      console.log("Direct match found:", directMatch.t);
-      this.settings.defaultBang = directMatch.t;
-      this.selectedBangItem = directMatch;
-      this.defaultBangInput.value = `!${directMatch.t} - ${directMatch.s}`;
-      return;
-    }
-    
-    // If no direct match, use the filtering logic
-    console.log("No direct match, using filter and sort");
-    const matchedBangs = filterAndSortBangs(combinedBangs, inputValue, 1);
-    console.log("Matched bangs:", matchedBangs.length > 0 ? matchedBangs[0].t : "none");
-    
-    if (matchedBangs.length > 0) {
-      const bestMatch = matchedBangs[0];
-      this.settings.defaultBang = bestMatch.t;
-      this.selectedBangItem = bestMatch;
-      this.defaultBangInput.value = `!${bestMatch.t} - ${bestMatch.s}`;
-    } else {
-      // If no match found and input is not empty, try to match by service name
-      console.log("No filter match, trying service name match");
-      const serviceMatch = combinedBangs.find(b => 
-        b.s.toLowerCase().includes(inputValue.toLowerCase())
+    if (bangMatch) {
+      const bangText = bangMatch[1];
+      
+      // Find the matching bang
+      const matchingBang = combinedBangs.find(b => 
+        (Array.isArray(b.t) ? b.t.includes(bangText) : b.t === bangText)
       );
       
-      if (serviceMatch) {
-        console.log("Service match found:", serviceMatch.t);
-        this.settings.defaultBang = serviceMatch.t;
-        this.selectedBangItem = serviceMatch;
-        this.defaultBangInput.value = `!${serviceMatch.t} - ${serviceMatch.s}`;
-      } else {
-        // Still no match, default to Google
-        console.log("No match found, defaulting to Google");
-        const googleBang = combinedBangs.find(b => b.s.toLowerCase() === 'google' && b.t === 'g');
-        if (googleBang) {
-          this.settings.defaultBang = googleBang.t;
-          this.selectedBangItem = googleBang;
-          this.defaultBangInput.value = `!${googleBang.t} - ${googleBang.s}`;
-        }
+      if (matchingBang) {
+        this.selectedBangItem = matchingBang;
+        // Use the specific trigger that was entered
+        this.settings.defaultBang = bangText;
+        
+        // Save settings
+        this.onSettingsChange(this.settings);
+        clearBangFilterCache();
       }
     }
   }
@@ -413,11 +384,28 @@ export class SettingsModal {
    * Handles bang selection from dropdown
    */
   private handleBangSelection(bangText: string): void {
-    const matchingBang = bangs.find(b => b.t === bangText);
-    if (matchingBang && this.defaultBangInput) {
-      this.defaultBangInput.value = `!${matchingBang.t} - ${matchingBang.s}`;
+    if (!this.defaultBangInput) return;
+    
+    const combinedBangs = getCombinedBangs(this.settings);
+    
+    // Find the matching bang
+    const matchingBang = combinedBangs.find(b => 
+      (Array.isArray(b.t) ? b.t.includes(bangText) : b.t === bangText)
+    );
+    
+    if (matchingBang) {
       this.selectedBangItem = matchingBang;
-      this.settings.defaultBang = matchingBang.t;
+      this.defaultBangInput.value = `!${bangText} - ${matchingBang.s}`;
+      this.settings.defaultBang = bangText;
+      
+      // Save settings
+      this.onSettingsChange(this.settings);
+      clearBangFilterCache();
+      
+      // Hide the dropdown
+      if (this.bangDropdown) {
+        this.bangDropdown.hide();
+      }
     }
   }
 } 

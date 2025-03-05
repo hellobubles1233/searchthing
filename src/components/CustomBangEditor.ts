@@ -182,15 +182,15 @@ export class CustomBangEditor {
     
     // Bang trigger (shortcut)
     const triggerGroup = this.createFormGroup(
-      'Shortcut',
-      'The unique code used to trigger this bang (e.g., "g" for Google)',
+      'Trigger',
+      'This is what you type after the bang prefix (e.g., "g" for !g). Multiple triggers can be separated by commas (e.g., "g, google").',
       true
     );
     
     this.triggerInput = createElement('input', {
       type: 'text',
       className: 'w-full px-4 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
-      placeholder: 'e.g., maps',
+      placeholder: 'e.g., g, google',
       autocomplete: 'off',
       spellcheck: 'false',
       maxlength: '20',
@@ -352,7 +352,11 @@ export class CustomBangEditor {
    * Populates the form fields with bang data
    */
   private populateFormFields(bang: BangItem): void {
-    if (this.triggerInput) this.triggerInput.value = bang.t;
+    if (this.triggerInput) {
+      // Handle array of triggers by joining them with commas
+      const triggerValue = Array.isArray(bang.t) ? bang.t.join(', ') : bang.t;
+      this.triggerInput.value = triggerValue;
+    }
     if (this.serviceInput) this.serviceInput.value = bang.s;
     if (this.domainInput) this.domainInput.value = bang.d;
     if (this.categoryInput) this.categoryInput.value = bang.c || '';
@@ -369,9 +373,14 @@ export class CustomBangEditor {
       return;
     }
     
+    // Get trigger value and split it into an array if it contains commas
+    const triggerValue = this.triggerInput?.value.trim() || '';
+    // Split by commas and trim each value
+    const triggers = triggerValue.split(',').map(t => t.trim()).filter(t => t !== '');
+    
     // Create bang object from form data
     const bang: BangItem = {
-      t: this.triggerInput?.value.trim() || '',
+      t: triggers.length > 1 ? triggers : triggers[0] || '', // Use array if multiple triggers, otherwise use string
       s: this.serviceInput?.value.trim() || '',
       d: this.domainInput?.value.trim() || '',
       c: this.categoryInput?.value.trim() || undefined,
@@ -436,7 +445,7 @@ export class CustomBangEditor {
     
     // Check required fields
     if (!this.triggerInput?.value.trim()) {
-      this.showError('Shortcut is required', this.triggerInput);
+      this.showError('Trigger is required', this.triggerInput);
       return false;
     }
     

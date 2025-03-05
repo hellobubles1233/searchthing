@@ -223,9 +223,14 @@ export class CustomBangManager {
       className: 'flex items-center gap-2 mb-1'
     });
     
+    // Format trigger display - handle both string and array
+    const triggerText = Array.isArray(bang.t) 
+      ? bang.t.map(t => `!${t}`).join(', ') 
+      : `!${bang.t}`;
+    
     const trigger = createElement('span', {
       className: 'font-mono text-[#3a86ff] font-bold'
-    }, [`!${bang.t}`]);
+    }, [triggerText]);
     
     const service = createElement('span', {
       className: 'text-white'
@@ -280,34 +285,37 @@ export class CustomBangManager {
   private handleBangSave(bang: BangItem | null, isEdit: boolean): void {
     if (!bang) return;
     
-    // Initialize custom bangs array if it doesn't exist
+    // Ensure customBangs array exists
     if (!this.settings.customBangs) {
       this.settings.customBangs = [];
     }
     
     if (isEdit) {
       // Update existing bang
-      const index = this.settings.customBangs.findIndex(b => b.t === bang.t);
-      if (index >= 0) {
-        this.settings.customBangs[index] = bang;
+      // Original bang might use either string or array for t, so we need a more flexible way to find it
+      if (this.pendingDeleteBang) {
+        const originalTriggersArray = Array.isArray(this.pendingDeleteBang.t) 
+          ? this.pendingDeleteBang.t 
+          : [this.pendingDeleteBang.t];
+          
+        // Find the index by comparing with originalBang
+        const index = this.settings.customBangs.findIndex(b => 
+          b.s === this.pendingDeleteBang?.s && 
+          b.d === this.pendingDeleteBang?.d);
+        
+        if (index >= 0) {
+          this.settings.customBangs[index] = bang;
+        }
       }
     } else {
       // Add new bang
       this.settings.customBangs.push(bang);
     }
     
-    // Clear the bang filter cache since bangs have changed
-    clearBangFilterCache();
-    
-    // Save settings and notify parent
-    saveSettings(this.settings);
+    // Save settings and refresh the list
     this.onSettingsChange(this.settings);
+    clearBangFilterCache();
     this.refreshBangList();
-    
-    // Close the editor
-    if (this.bangEditor) {
-      this.bangEditor.hide();
-    }
   }
 
   /**
@@ -423,15 +431,16 @@ export class CustomBangManager {
    * Deletes a bang
    */
   private deleteBang(bang: BangItem): void {
-    if (!this.settings.customBangs) return;
-    
-    // Store the bang to delete
     this.pendingDeleteBang = bang;
     
-    // Show confirmation dialog
+    // Format trigger display for the confirmation message
+    const triggerText = Array.isArray(bang.t) 
+      ? bang.t.map(t => `!${t}`).join(', ') 
+      : `!${bang.t}`;
+    
     this.showConfirmationDialog(
-      `Are you sure you want to delete the !${bang.t} bang?`, 
-      () => this.confirmDeleteBang()
+      `Are you sure you want to delete the ${triggerText} bang?`,
+      this.confirmDeleteBang.bind(this)
     );
   }
   
