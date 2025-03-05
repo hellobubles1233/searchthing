@@ -3,6 +3,53 @@ import { UserSettings } from "./settings";
 import { bangs as defaultBangs } from "../bang";
 
 /**
+ * Simple LRU cache for storing bang filter results
+ * This helps reduce repeated expensive filtering operations
+ */
+class BangCache {
+  private cache: Map<string, BangItem[]>;
+  private maxSize: number;
+  
+  constructor(maxSize = 50) {
+    this.cache = new Map<string, BangItem[]>();
+    this.maxSize = maxSize;
+  }
+  
+  get(query: string): BangItem[] | null {
+    if (!query) return null;
+    
+    const item = this.cache.get(query);
+    if (item) {
+      // Move to front of LRU by deleting and re-adding
+      this.cache.delete(query);
+      this.cache.set(query, item);
+      return item;
+    }
+    return null;
+  }
+  
+  set(query: string, results: BangItem[]): void {
+    if (!query) return;
+    
+    // Evict oldest if needed
+    if (this.cache.size >= this.maxSize) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey !== undefined) {
+        this.cache.delete(oldestKey);
+      }
+    }
+    this.cache.set(query, results);
+  }
+  
+  clear(): void {
+    this.cache.clear();
+  }
+}
+
+// Create a singleton instance of the cache
+const bangFilterCache = new BangCache();
+
+/**
  * Combines default bangs with user's custom bangs
  * Custom bangs with the same trigger as default bangs will override them
  * 
@@ -28,7 +75,16 @@ export function getCombinedBangs(settings: UserSettings): BangItem[] {
 }
 
 /**
+ * Clears the bang filter cache when settings change
+ * This ensures fresh results when user adds/removes custom bangs
+ */
+export function clearBangFilterCache(): void {
+  bangFilterCache.clear();
+}
+
+/**
  * Filters and sorts bangs based on a search query
+ * Now with caching for improved performance
  * 
  * @param bangs The array of bangs to filter and sort
  * @param query The search query
@@ -42,9 +98,15 @@ export function filterAndSortBangs(
 ): BangItem[] {
   const normalizedQuery = query.toLowerCase();
   
+  // Check cache first to avoid expensive filtering
+  const cachedResults = bangFilterCache.get(normalizedQuery);
+  if (cachedResults) {
+    return cachedResults;
+  }
+  
   // First, get category-matching bangs sorted by relevance
   const categoryMatchBangs = bangs
-    .filter(bang => bang.c?.toLowerCase() === normalizedQuery)
+    .filter(bang => bang.c && bang.c.toLowerCase() === normalizedQuery)
     .sort((a, b) => b.r - a.r);
   
   // Then, get the regular matches (bangs that match by trigger)
@@ -81,7 +143,7 @@ export function filterAndSortBangs(
     let matchScore: number;
     
     // If this is a category match, give it the best possible score
-    if (bang.c?.toLowerCase() === normalizedQuery) {
+    if (bang.c && bang.c.toLowerCase() === normalizedQuery) {
       matchScore = -1; // Even better than exact trigger match
     }
     // If bang.t exactly equals query, next best score
@@ -136,5 +198,10 @@ export function filterAndSortBangs(
   }
   
   // Take the top results after deduplication
-  return deduplicated.slice(0, maxItems);
+  const results = deduplicated.slice(0, maxItems);
+  
+  // Cache the results for future lookups
+  bangFilterCache.set(normalizedQuery, results);
+  
+  return results;
 } 

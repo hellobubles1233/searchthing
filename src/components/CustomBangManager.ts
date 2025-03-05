@@ -2,6 +2,7 @@ import { createElement } from "../utils/dom";
 import { BangItem } from "../types/BangItem";
 import { UserSettings, loadSettings, saveSettings } from "../utils/settings";
 import { CustomBangEditor } from "./CustomBangEditor";
+import { clearBangFilterCache } from "../utils/bangUtils";
 
 export class CustomBangManager {
   private modal: HTMLDivElement | null = null;
@@ -295,12 +296,18 @@ export class CustomBangManager {
       this.settings.customBangs.push(bang);
     }
     
-    // Save settings
+    // Clear the bang filter cache since bangs have changed
+    clearBangFilterCache();
+    
+    // Save settings and notify parent
     saveSettings(this.settings);
     this.onSettingsChange(this.settings);
-    
-    // Refresh the bang list
     this.refreshBangList();
+    
+    // Close the editor
+    if (this.bangEditor) {
+      this.bangEditor.hide();
+    }
   }
 
   /**

@@ -1,4 +1,4 @@
-import { createElement } from "../utils/dom";
+import { createElement, debounce } from "../utils/dom";
 import { BangDropdown } from "./BangDropdown";
 import { SettingsModal } from "./SettingsModal";
 import { loadSettings, UserSettings } from "../utils/settings";
@@ -212,7 +212,7 @@ export class SearchForm {
   }
   
   private setupBangAutocomplete(): void {
-    this.searchInput.addEventListener("input", () => {
+    this.searchInput.addEventListener("input", debounce(() => {
       const inputValue = this.searchInput.value;
       const bangMatch = inputValue.match(/!([a-zA-Z0-9]*)$/);
       
@@ -240,7 +240,7 @@ export class SearchForm {
           this.bangDropdown.hide();
         }
       }
-    });
+    }, 150)); // 150ms debounce delay
     
     // Handle keyboard navigation in dropdown
     this.searchInput.addEventListener("keydown", (e) => {
