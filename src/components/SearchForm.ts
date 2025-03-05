@@ -7,6 +7,7 @@ import { bangWorker } from "../utils/workerUtils";
 import { SearchInputComponent } from "./SearchInputComponent";
 import { SearchInfoComponent, BangExample } from "./SearchInfoComponent";
 import { BangSuggestionManager } from "./BangSuggestionManager";
+import { SearchHeaderComponent } from "./SearchHeaderComponent";
 
 export class SearchForm {
   private container: HTMLDivElement;
@@ -15,6 +16,7 @@ export class SearchForm {
   private settings: UserSettings;
   private searchInput: SearchInputComponent;
   private searchInfo: SearchInfoComponent;
+  private searchHeader: SearchHeaderComponent;
   private bangSuggestionManager: BangSuggestionManager | null = null;
   
   constructor() {
@@ -36,24 +38,6 @@ export class SearchForm {
     
     console.log("SearchForm constructor - Is Recursive:", isRecursive, "Query:", query);
     
-    // Create a heading that shows when in recursive mode and normal mode
-    const searchHeading = createElement('h2', {
-      className: 'mb-6 text-white text-2xl font-light text-center tracking-wider',
-    }, [isRecursive ? 'Processing recursive search...' : 'Search with !Bangs']);
-    
-    // Create buttons container for action buttons
-    const buttonsContainer = createElement('div', {
-      className: 'flex items-center gap-2'
-    });
-    
-    // Add custom bangs button
-    const customBangsButton = createElement('button', {
-      className: 'text-white/50 hover:text-white/90 transition-colors px-3 py-1 rounded-full hover:bg-white/10 flex items-center'
-    }, [
-      'My Bangs',
-      createElement('span', { className: 'ml-1' }, ['+'])
-    ]);
-    
     // Initialize custom bang manager
     this.customBangManager = new CustomBangManager((newSettings) => {
       // Update local settings when custom bangs change
@@ -63,41 +47,22 @@ export class SearchForm {
       this.reinitializeBangSuggestionManager();
     });
     
-    // Add click event for custom bangs button
-    customBangsButton.addEventListener('click', () => {
-      this.customBangManager.show();
-    });
-    
-    // Add settings gear icon
-    const settingsIcon = createElement('button', {
-      className: 'text-white/50 hover:text-white/90 transition-colors w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10'
-    });
-    
-    // Add settings icon image
-    const settingsImg = createElement('img', {
-      src: '/settings.png',
-      alt: 'Settings',
-      className: 'w-10 h-10 opacity-80 hover:opacity-100 transition-opacity'
-    });
-    
-    settingsIcon.appendChild(settingsImg);
-    
     // Initialize settings modal
     this.settingsModal = new SettingsModal((newSettings) => {
       // Update local settings when modal settings change
       this.settings = newSettings;
     });
     
-    // Add click event for settings icon
-    settingsIcon.addEventListener('click', () => {
-      this.settingsModal.toggle();
+    // Create and initialize the search header component
+    this.searchHeader = new SearchHeaderComponent({
+      isRecursive,
+      onCustomBangsClick: () => {
+        this.customBangManager.show();
+      },
+      onSettingsClick: () => {
+        this.settingsModal.toggle();
+      }
     });
-    
-    // Add buttons to container
-    buttonsContainer.append(customBangsButton, settingsIcon);
-    
-    // Add buttons container to heading
-    searchHeading.appendChild(buttonsContainer);
     
     // Create and initialize the search input component
     this.searchInput = new SearchInputComponent(this.settings, {
@@ -135,9 +100,9 @@ export class SearchForm {
     ];
     this.searchInfo = new SearchInfoComponent(examples);
     
-    // Add search heading, form, and info to search container
+    // Add components to search container
     this.container.append(
-      searchHeading, 
+      this.searchHeader.getElement(),
       this.searchInput.getElement(),
       this.searchInfo.getElement()
     );
@@ -218,6 +183,9 @@ export class SearchForm {
           `;
           document.head.appendChild(style);
         }
+        
+        // Update the header to show recursive mode
+        this.searchHeader.updateHeading(true);
       }
       
       this.searchInput.focus();
