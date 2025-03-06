@@ -1,7 +1,6 @@
 // This file was (mostly) ripped from https://duckduckgo.com/bang.js
 
-export const bangs = [
-{
+export const bangs = [{
     c: "Online Services",
     d: "stockflare.com",
     r: 0,
@@ -4264,6 +4263,15 @@ export const bangs = [
     sc: "Downloads (software)",
     t: ["au", "aur"],
     u: "https://aur.archlinux.org/packages/?K={{{s}}}",
+  },
+{
+    c: "Tech",
+    d: "lehollandaisvolant.net",
+    r: 0,
+    s: "Le Hollandais Volant : au fil du web",
+    sc: "Blogs",
+    t: "lhvl",
+    u: "http://lehollandaisvolant.net/?mode=links&q={{{s}}}",
   },
 {
     c: "Tech",
@@ -12532,15 +12540,6 @@ export const bangs = [
   },
 {
     c: "Tech",
-    d: "devot-ee.com",
-    r: 0,
-    s: "Devot:ee",
-    sc: "Downloads (add-ons)",
-    t: "devotee",
-    u: "http://devot-ee.com/search/results?keywords={{{s}}}&addon_version_support=ee2",
-  },
-{
-    c: "Tech",
     d: "devrant.com",
     r: 0,
     s: "devRant",
@@ -15031,6 +15030,15 @@ export const bangs = [
     sc: "Programming",
     t: "ee",
     u: "https://duckduckgo.com/?q=site%3Ahttp%3A%2F%2Fellislab.com%2Fforums%2F+{{{s}}}",
+  },
+{
+    c: "Tech",
+    d: "devot-ee.com",
+    r: 0,
+    s: "Devot:ee",
+    sc: "Downloads (add-ons)",
+    t: "devotee",
+    u: "http://devot-ee.com/search/results?keywords={{{s}}}&addon_version_support=ee2",
   },
 {
     c: "Entertainment",
@@ -31530,15 +31538,6 @@ export const bangs = [
     u: "http://lehollandaisvolant.net/?q={{{s}}}",
   },
 {
-    c: "Tech",
-    d: "lehollandaisvolant.net",
-    r: 0,
-    s: "Le Hollandais Volant : au fil du web",
-    sc: "Blogs",
-    t: "lhvl",
-    u: "http://lehollandaisvolant.net/?mode=links&q={{{s}}}",
-  },
-{
     c: "Online Services",
     d: "www.linkedin.com",
     r: 3073,
@@ -39655,6 +39654,15 @@ export const bangs = [
     u: "http://www.openrice.com/zh/hongkong/restaurant/sr1.htm?tc=sr1quick&s=1&region=0&inputstrwhat={{{s}}}&inputstrwhere=",
   },
 {
+    c: "AI",
+    d: "openrouter.ai",
+    r: 0,
+    s: "OpenRouter",
+    sc: "Tools",
+    t: ["openrouter", "orouter", "openr", "aimodels"],
+    u: "https://openrouter.ai/models?q=${{{s}}} ",
+  },
+{
     c: "Research",
     d: "www.opensecrets.org",
     r: 0,
@@ -45397,6 +45405,15 @@ export const bangs = [
     u: "http://cekresi.com/?noresi={{{s}}}",
   },
 {
+    c: "Online Services",
+    d: "www.saugus.net",
+    r: 0,
+    s: "Saugus.net: Resources for Saugus, Massachusetts",
+    sc: "Search (Private)",
+    t: "saugus",
+    u: "https://www.saugus.net/cgi-bin/htsearch?config=htdig&restrict=&exclude=&words={{{s}}}&method=and&format=long",
+  },
+{
     c: "Research",
     d: "www.respaper.com",
     r: 0,
@@ -47060,15 +47077,6 @@ export const bangs = [
     sc: "Images",
     t: "saucenao",
     u: "http://saucenao.com/search.php?db=999&url={{{s}}}",
-  },
-{
-    c: "Online Services",
-    d: "www.saugus.net",
-    r: 0,
-    s: "Saugus.net: Resources for Saugus, Massachusetts",
-    sc: "Search (Private)",
-    t: "saugus",
-    u: "https://www.saugus.net/cgi-bin/htsearch?config=htdig&restrict=&exclude=&words={{{s}}}&method=and&format=long",
   },
 {
     c: "Tech",

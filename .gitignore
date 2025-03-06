@@ -28,3 +28,4 @@ __pycache__/*
 *.pkl
 removed_bangs_report.md
 src/bang_auto.ts
+*.bak
