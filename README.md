@@ -49,6 +49,33 @@ The search bar on the **!ReBang** home page does more than just accept queries:
 * **Curated collection** - Our bang list is regularly audited to remove dead links that DuckDuckGo hasn't maintained
 * **Community suggestions** - New bangs are added based on user requests and usage patterns
 
+## Clean, Optimized, FAST Bang Database
+
+While DuckDuckGo boasts about their 13,000+ bangs, we've learned that nearly half of them don't work! **!ReBang** focuses on quality, ensuring every bang in our database:
+  * Points to a working website
+  * Uses the correct search URL format
+  * Is properly maintained and updated
+
+**!ReBang** dramatically improves on DuckDuckGo's bang database with a thorough cleanup and optimization:
+
+* **Removed 6,500+ dead bangs** - Eliminated bangs pointing to:
+  * Websites that no longer exist (over 4,900 dead domains!)
+  * Search functions that have been deprecated or changed
+  * Redirects that lead nowhere or to unexpected destinations
+  
+* **Eliminated massive redundancy** - DuckDuckGo artificially inflated their bang count with duplicates:
+  * **German Amazon alone had 10+ different bangs** (`!amazonde`, `!amazonger`, `!amazondeutschland`, `!amazong`, etc.) all pointing to the exact same URL
+  * Countless sites had 5-6 different bangs that all did the same thing
+  * Many sites had separate bangs for their .com, .org, .net domains — all redirecting to the same place
+  * This redundancy makes the system harder to use and unnecessarily bloated
+  
+* **Intelligent organization** - Reduced database size by ~49% without losing functionality:
+  * Proper aliasing of identical destinations
+  * Binary search optimization for instant results
+  * Consolidated URLs with the same destination, while keeping the aliasing
+
+* **Why hasn't DuckDuckGo done this?** - Despite promoting bangs as a key feature for over a decade, DuckDuckGo has neglected basic maintenance of their bang database. **!ReBang** steps in to provide what users deserve: a clean, fast, and reliable bang system.
+
 ## How to Use
 
 1. **As a Custom Search Engine:**
@@ -89,6 +116,8 @@ Your custom bangs work just like official ones and will override any official ba
 | AI-focused Bangs | ❌ | T3 Only | ✅ |
 | Maintained Bang List | Partially | ❌ | ✅ |
 | No White Flash for Dark Mode Users | ❓ | ❌ | ✅ |
+| Curated, Working Bangs | ❌ | ❌ | ✅ |
+| Optimized & Deduplicated | ❌ | ❌ | ✅ |
 
 ## Why **!ReBang**?
 
@@ -98,5 +127,6 @@ Your custom bangs work just like official ones and will override any official ba
 * **Reliability**: Dead links are regularly pruned from our bang collection
 * **Privacy**: Your searches stay on your device - we don't track anything
 * **Modern**: Sleek and Simple.
+* **Quality**: Every bang in our database is verified to work properly
 * **Dark Mode Friendly**: Fixed the white flash issue during redirects that affected dark mode users in unduck
 * **Community-driven**: Actively maintained and improved based on user feedback
