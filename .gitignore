@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 src/bang_explained.ts
 *.py
+__pycache__/*
+*.pkl
+removed_bangs_report.md
+src/bang_auto.ts

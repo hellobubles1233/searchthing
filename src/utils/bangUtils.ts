@@ -50,6 +50,9 @@ class BangCache {
 // Create a singleton instance of the cache
 const bangFilterCache = new BangCache();
 
+// Global trigger map cache to avoid recreating it for each search
+let globalTriggerMap: Map<string, BangItem[]> | null = null;
+
 /**
  * Combines default bangs with user's custom bangs
  * Custom bangs with the same trigger as default bangs will override them
@@ -64,10 +67,10 @@ export function getCombinedBangs(settings: UserSettings): BangItem[] {
 
   // Create a map of custom bangs by trigger for quick lookup
   const customBangMap = new Map<string, BangItem>();
-  settings.customBangs.forEach(bang => {
+  settings.customBangs.forEach((bang: BangItem) => {
     // Handle both string and array of triggers
     const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
-    triggers.forEach(trigger => {
+    triggers.forEach((trigger: string) => {
       customBangMap.set(trigger, bang);
     });
   });
@@ -87,6 +90,7 @@ export function getCombinedBangs(settings: UserSettings): BangItem[] {
 /**
  * Clears the bang filter cache when settings change
  * This ensures fresh results when user adds/removes custom bangs
+ * Also clears the trigger map cache
  */
 export function clearBangFilterCache(): void {
   bangFilterCache.clear();
@@ -97,11 +101,75 @@ export function clearBangFilterCache(): void {
   } catch (error) {
     console.warn('Failed to clear worker cache:', error);
   }
+  
+  // Clear the trigger map cache
+  globalTriggerMap = null;
+}
+
+/**
+ * Binary search to find the starting index for bangs with a given prefix
+ * Takes advantage of alphabetical ordering for faster lookups
+ * 
+ * @param bangs Array of bangs (must be alphabetically sorted by first trigger)
+ * @param prefix The prefix to search for
+ * @returns The index where bangs with this prefix start, or -1 if not found
+ */
+function binarySearchBangPrefix(bangs: BangItem[], prefix: string): number {
+  let left = 0;
+  let right = bangs.length - 1;
+  let result = -1;
+
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    const bang = bangs[mid];
+    
+    // Get the effective trigger for comparison
+    const trigger = Array.isArray(bang.t) ? bang.t[0] : bang.t;
+    const triggerLower = trigger.toLowerCase();
+    
+    if (triggerLower.startsWith(prefix)) {
+      // Found a match, but continue searching left to find the first occurrence
+      result = mid;
+      right = mid - 1;
+    } else if (triggerLower < prefix) {
+      // The current trigger is alphabetically before the prefix, search right
+      left = mid + 1;
+    } else {
+      // The current trigger is alphabetically after the prefix, search left
+      right = mid - 1;
+    }
+  }
+  
+  return result;
+}
+
+/**
+ * Create a map of all bang triggers for fast lookup
+ * Maps each trigger to the bang objects that use it
+ * 
+ * @param bangs Array of all bang items
+ * @returns Map of triggers to bang objects
+ */
+function createTriggerMap(bangs: BangItem[]): Map<string, BangItem[]> {
+  const triggerMap = new Map<string, BangItem[]>();
+  
+  for (const bang of bangs) {
+    const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
+    
+    for (const trigger of triggers) {
+      const normalizedTrigger = trigger.toLowerCase();
+      const existingBangs = triggerMap.get(normalizedTrigger) || [];
+      existingBangs.push(bang);
+      triggerMap.set(normalizedTrigger, existingBangs);
+    }
+  }
+  
+  return triggerMap;
 }
 
 /**
  * Filters and sorts bangs based on a search query
- * Now with caching for improved performance
+ * Now with caching and optimized for alphabetically sorted bangs
  * 
  * @param bangs The array of bangs to filter and sort
  * @param query The search query
@@ -119,6 +187,11 @@ export function filterAndSortBangs(
   const cachedResults = bangFilterCache.get(normalizedQuery);
   if (cachedResults) {
     return cachedResults;
+  }
+  
+  // Lazy initialize the trigger map
+  if (!globalTriggerMap) {
+    globalTriggerMap = createTriggerMap(bangs);
   }
   
   // First, get category-matching bangs sorted by relevance
@@ -178,18 +251,82 @@ export function filterAndSortBangs(
       .sort((a, b) => scoreMatch(a) - scoreMatch(b))[0] || triggers[0];
   };
   
-  // Then, get the regular matches (bangs that match by trigger)
-  const triggerMatchBangs = bangs
-    .filter(bang => bangMatchesQuery(bang, normalizedQuery))
-    // Exclude any bangs that already matched by category to avoid duplicates
-    .filter(bang => !categoryMatchBangs.some(catBang => {
+  // Find all bangs with triggers that start with the query
+  // This covers both the primary trigger (first array element) and secondary triggers
+  const startsWithBangs = new Set<BangItem>();
+  
+  if (normalizedQuery.length > 0) {
+    // Use binary search for primary triggers (optimized by alphabetical ordering)
+    const startIndex = binarySearchBangPrefix(bangs, normalizedQuery);
+    if (startIndex !== -1) {
+      // Collect all bangs whose first trigger starts with the query
+      for (let i = startIndex; i < bangs.length; i++) {
+        const bang = bangs[i];
+        const firstTrigger = Array.isArray(bang.t) ? bang.t[0] : bang.t;
+        
+        // Stop once we reach a trigger that doesn't start with our query
+        if (!firstTrigger.toLowerCase().startsWith(normalizedQuery)) {
+          break;
+        }
+        
+        startsWithBangs.add(bang);
+      }
+    }
+    
+    // For secondary triggers, we use the trigger map
+    // Find all triggers that start with the query
+    for (const [trigger, matchingBangs] of globalTriggerMap.entries()) {
+      if (trigger.startsWith(normalizedQuery)) {
+        // Add all bangs that have this trigger
+        for (const bang of matchingBangs) {
+          startsWithBangs.add(bang);
+        }
+      }
+    }
+  }
+  
+  // Filter out bangs that are in the category matches
+  const startsWithFilteredBangs = Array.from(startsWithBangs).filter(bang => 
+    !categoryMatchBangs.some(catBang => {
       const catTriggers = Array.isArray(catBang.t) ? catBang.t : [catBang.t];
-      const bangTriggers = Array.isArray(bang.t) ? bang.t : [bang.t];
+      const currentTriggers = Array.isArray(bang.t) ? bang.t : [bang.t];
       return catTriggers.some(catTrigger => 
-        bangTriggers.includes(catTrigger)
+        currentTriggers.includes(catTrigger)
       );
-    }))
-    // Create a copy of each bang with only its best matching trigger
+    })
+  );
+  
+  // Create copies with the best matching trigger for display
+  const startsWith = startsWithFilteredBangs.map(bang => {
+    const bestTrigger = getBestMatchingTrigger(bang, normalizedQuery);
+    const originalTriggers = Array.isArray(bang.t) ? bang.t : [bang.t];
+    
+    return {
+      ...bang,
+      t: bestTrigger,
+      __originalT: originalTriggers
+    };
+  });
+  
+  // For the remaining matches (trigger contains query or query contains trigger),
+  // we still need to scan all bangs
+  const otherMatches = bangs
+    .filter(bang => {
+      // Skip if this bang already matches by prefix or category
+      if (startsWithBangs.has(bang)) return false;
+      
+      // Skip category matches
+      if (categoryMatchBangs.some(catBang => {
+        const catTriggers = Array.isArray(catBang.t) ? catBang.t : [catBang.t];
+        const currentTriggers = Array.isArray(bang.t) ? bang.t : [bang.t];
+        return catTriggers.some(catTrigger => 
+          currentTriggers.includes(catTrigger)
+        );
+      })) return false;
+      
+      // Check if any trigger matches the query
+      return bangMatchesQuery(bang, normalizedQuery);
+    })
     .map(bang => {
       const bestTrigger = getBestMatchingTrigger(bang, normalizedQuery);
       const originalTriggers = Array.isArray(bang.t) ? bang.t : [bang.t];
@@ -198,13 +335,13 @@ export function filterAndSortBangs(
       return {
         ...bang,
         t: bestTrigger,
-        // Store the original triggers array to be able to show aliases in dropdown
         __originalT: originalTriggers
       };
     });
   
-  // Sort the bangs with their best triggers
-  const sortedBangs = triggerMatchBangs.sort((a, b) => {
+  // Combine and sort the results
+  // Prefix matches get highest priority since they're most relevant
+  const sortedMatches = [...startsWith, ...otherMatches].sort((a, b) => {
     // Exact match gets highest priority
     const aExactMatch = String(a.t).toLowerCase() === normalizedQuery;
     const bExactMatch = String(b.t).toLowerCase() === normalizedQuery;
@@ -233,7 +370,7 @@ export function filterAndSortBangs(
   });
   
   // Combine the category matches with the sorted trigger matches
-  const combinedBangs = [...categoryMatchBangs, ...sortedBangs];
+  const combinedBangs = [...categoryMatchBangs, ...sortedMatches];
   
   // Take the top results
   const results = combinedBangs.slice(0, maxItems);
