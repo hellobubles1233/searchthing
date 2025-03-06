@@ -1,4 +1,5 @@
 import { createElement } from "../utils/dom";
+import { AboutPage } from "./AboutPage";
 
 export interface SearchHeaderOptions {
   isRecursive?: boolean;
@@ -12,8 +13,13 @@ export class SearchHeaderComponent {
   private heading: HTMLHeadingElement;
   private customBangsButton: HTMLButtonElement;
   private settingsIcon: HTMLButtonElement;
+  private aboutButton: HTMLButtonElement;
+  private aboutPage: AboutPage;
   
   constructor(options: SearchHeaderOptions = {}) {
+    // Create the about page
+    this.aboutPage = new AboutPage();
+    
     // Create container for the header
     this.container = createElement('div', {
       className: 'mb-6 flex flex-col items-center'
@@ -42,7 +48,30 @@ export class SearchHeaderComponent {
       this.customBangsButton.addEventListener('click', options.onCustomBangsClick);
     }
     
-    // Add settings gear icon on the right using SVG
+    // Create right side buttons container for about and settings
+    const rightButtonsContainer = createElement('div', {
+      className: 'flex items-center gap-2'
+    });
+    
+    // Add about button (question mark)
+    this.aboutButton = createElement('button', {
+      className: 'text-white/50 hover:text-white/90 transition-colors w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10',
+      title: 'About !ReBang'
+    });
+    
+    // Create question mark icon
+    const questionMarkIcon = createElement('span', {
+      className: 'text-xl font-semibold'
+    }, ['?']);
+    
+    this.aboutButton.appendChild(questionMarkIcon);
+    
+    // Add click event for about button
+    this.aboutButton.addEventListener('click', () => {
+      this.aboutPage.show();
+    });
+    
+    // Add settings gear icon using SVG
     this.settingsIcon = createElement('button', {
       className: 'text-white/50 hover:text-white/90 transition-colors w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10'
     });
@@ -61,8 +90,11 @@ export class SearchHeaderComponent {
       this.settingsIcon.addEventListener('click', options.onSettingsClick);
     }
     
-    // Add buttons to container (left and right)
-    this.buttonsContainer.append(this.customBangsButton, this.settingsIcon);
+    // Add buttons to the right container
+    rightButtonsContainer.append(this.aboutButton, this.settingsIcon);
+    
+    // Add left and right containers to the main buttons container
+    this.buttonsContainer.append(this.customBangsButton, rightButtonsContainer);
     
     // Add heading and buttons to container
     this.container.append(this.heading, this.buttonsContainer);

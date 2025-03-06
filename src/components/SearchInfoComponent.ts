@@ -20,7 +20,7 @@ export class SearchInfoComponent {
     
     // Create search info badges container
     this.container = createElement('div', {
-      className: 'flex flex-wrap gap-2 mt-3 justify-center' 
+      className: 'flex flex-wrap gap-2 mt-3 justify-center'
     });
     
     // Create badges for each example
