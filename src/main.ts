@@ -29,6 +29,23 @@ function main(): void {
       console.error("Root element '#app' not found");
     }
   }
+  
+  // Add event listener for back button navigation
+  window.addEventListener('popstate', () => {
+    // Remove any existing loading overlays that might be present
+    const existingOverlays = document.querySelectorAll('.fixed.inset-0.bg-\\[\\#000\\].bg-opacity-90.z-50');
+    existingOverlays.forEach(overlay => {
+      document.body.removeChild(overlay);
+    });
+    
+    // Check if we need to redirect or show the home page
+    const shouldRedirect = performRedirect();
+    
+    if (!shouldRedirect) {
+      // If we're back at the home page, refresh to show the UI
+      window.location.reload();
+    }
+  });
 }
 
 // Start the application

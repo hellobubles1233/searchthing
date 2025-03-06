@@ -1,7 +1,7 @@
 import { createElement } from "../utils/dom";
 import { SettingsModal } from "./SettingsModal";
 import { loadSettings, UserSettings } from "../utils/settings";
-import { getUrlParameters } from "../utils/redirect";
+import { getUrlParameters, performRedirect } from "../utils/redirect";
 import { CustomBangManager } from "./CustomBangManager";
 import { bangWorker } from "../utils/workerUtils";
 import { SearchInputComponent } from "./SearchInputComponent";
@@ -85,8 +85,18 @@ export class SearchForm {
         
         // Short timeout to ensure the overlay is visible before redirect
         setTimeout(() => {
-          // Redirect to the current page with the query parameter
-          window.location.href = `${window.location.origin}?q=${encodeURIComponent(query)}`;
+          // Instead of directly changing location, use history.pushState to update the URL
+          // This allows proper handling of back button navigation
+          const newUrl = `${window.location.origin}?q=${encodeURIComponent(query)}`;
+          history.pushState({ query }, '', newUrl);
+          
+          // Then manually trigger the redirect logic
+          const redirected = performRedirect();
+          
+          // If redirection somehow fails, remove the overlay
+          if (!redirected) {
+            document.body.removeChild(loadingOverlay);
+          }
         }, 100);
       }
     });
