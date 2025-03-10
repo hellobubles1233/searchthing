@@ -79,9 +79,11 @@ export class SettingsModal {
   public hide(): void {
     if (!this.overlay) return;
     
-    // Hide the dropdown if visible
+    // Force hide and dispose the dropdown
     if (this.bangDropdown) {
       this.bangDropdown.hide();
+      this.bangDropdown.dispose();
+      this.bangDropdown = null;
     }
     
     // Apply fade-out animation
@@ -93,6 +95,7 @@ export class SettingsModal {
       if (this.overlay && document.body.contains(this.overlay)) {
         document.body.removeChild(this.overlay);
       }
+      
       this.isVisible = false;
     }, 300);
     
@@ -344,6 +347,23 @@ export class SettingsModal {
       this.defaultBangInput.addEventListener('input', () => {
         const query = this.defaultBangInput?.value.toLowerCase().replace(/^!/, '') || '';
         
+        // Hide dropdown for any query with spaces, hyphens, or other separators
+        if (query.includes(' ') || query.includes('-') || query.includes(':')) {
+          if (this.bangDropdown) {
+            this.bangDropdown.hide();
+            
+            // Force blur to ensure dropdown stays hidden
+            setTimeout(() => {
+              if (this.bangDropdown?.isDropdownVisible()) {
+                this.bangDropdown.hide();
+                this.defaultBangInput?.blur();
+                setTimeout(() => this.defaultBangInput?.focus(), 10);
+              }
+            }, 50);
+          }
+          return;
+        }
+        
         // Try to match the current input and update selectedBangItem in real-time
         // This ensures even if the user doesn't select from dropdown, we capture their intent
         if (query.length > 0) {
@@ -364,7 +384,21 @@ export class SettingsModal {
         }
         
         if (this.bangDropdown) {
-          this.bangDropdown.show(query);
+          // Always recreate the dropdown for a clean state
+          this.bangDropdown.dispose();
+          
+          // Make sure we have a valid input element before creating a new dropdown
+          if (this.defaultBangInput) {
+            this.bangDropdown = new BangDropdown(this.defaultBangInput, {
+              maxItems: 10,
+              maxHeight: '35vh',
+              onSelectBang: (bangText) => this.handleBangSelection(bangText),
+              appendTo: document.body,
+              positionStyle: 'fixed',
+              zIndex: 1000
+            });
+            this.bangDropdown.show(query);
+          }
         }
       });
       
@@ -385,6 +419,23 @@ export class SettingsModal {
             e.preventDefault(); // Prevent form submission
             if (this.bangDropdown.getSelectedIndex() >= 0) {
               this.bangDropdown.selectCurrent();
+            } else {
+              // If nothing is selected but Enter is pressed, forcibly hide the dropdown
+              this.bangDropdown.hide();
+              // Re-create dropdown to ensure clean state
+              const oldInput = this.defaultBangInput;
+              if (oldInput) {
+                this.bangDropdown = new BangDropdown(oldInput, {
+                  maxItems: 10,
+                  maxHeight: '35vh',
+                  onSelectBang: (bangText) => this.handleBangSelection(bangText),
+                  appendTo: document.body,
+                  positionStyle: 'fixed',
+                  zIndex: 1000
+                });
+              }
+              // Move focus away from the input to trigger a blur event
+              this.defaultBangInput?.blur();
             }
             break;
           case 'Escape':
@@ -402,6 +453,19 @@ export class SettingsModal {
             this.bangDropdown.show(query);
           }
         }
+      });
+      
+      // Add blur event handler to hide dropdown when focus is lost
+      this.defaultBangInput.addEventListener('blur', (e) => {
+        // Use setTimeout to allow click events on dropdown items to complete first
+        setTimeout(() => {
+          // Check if focus moved to another element that's not part of the dropdown
+          if (this.bangDropdown && 
+              document.activeElement !== this.defaultBangInput && 
+              !this.defaultBangInput?.contains(document.activeElement)) {
+            this.bangDropdown.hide();
+          }
+        }, 200); // Small delay to allow click events to process
       });
     }
     

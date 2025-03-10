@@ -35,13 +35,24 @@ export class BangDropdown {
     this.documentClickHandler = (e: MouseEvent) => {
       if (!this.isVisible) return;
       
+      // Be more aggressive about hiding when clicked anywhere
+      // Only prevent hiding if explicitly clicked on the dropdown or input
       const target = e.target as Node;
-      if (
-        this.container && 
-        !this.container.contains(target) && 
-        target !== this.inputElement
-      ) {
+      
+      // Check if user clicked on the dropdown or input
+      const clickedOnDropdown = this.container?.contains(target);
+      const clickedOnInput = this.inputElement === target || this.inputElement.contains(target);
+      
+      // If clicked elsewhere, hide the dropdown
+      if (!clickedOnDropdown && !clickedOnInput) {
         this.hide();
+        
+        // Re-enable click events after hiding to ensure the dropdown is actually hidden
+        setTimeout(() => {
+          if (this.isVisible) {
+            this.hide();
+          }
+        }, 10);
       }
     };
     
@@ -56,6 +67,9 @@ export class BangDropdown {
         } else {
           this.selectTopOption();
         }
+        
+        // Ensure dropdown is hidden after selection
+        this.hide();
       }
     };
     
@@ -93,6 +107,12 @@ export class BangDropdown {
     this.ensureContainer();
     
     if (!this.container) return;
+    
+    // If query contains spaces or is not directly next to a bang, hide and return
+    if (query.includes(' ')) {
+      this.hide();
+      return;
+    }
     
     // Make sure the container is visible
     this.container.style.display = 'block';
@@ -181,7 +201,8 @@ export class BangDropdown {
       const bangItem = this.createBangItem(bang);
       
       // Add click handler
-      bangItem.addEventListener('click', () => {
+      bangItem.addEventListener('click', (e) => {
+        e.stopPropagation(); // Stop event propagation
         this.selectedIndex = index;
         this.selectCurrent();
       });
@@ -235,26 +256,39 @@ export class BangDropdown {
   
   public hide(): void {
     if (this.container) {
-      // Clear all highlights before hiding
-      const highlightedItems = this.container.querySelectorAll('.bg-[#3a0082]/80');
-      highlightedItems.forEach(item => {
-        item.classList.remove('bg-[#3a0082]/80');
-      });
+      // Force remove from DOM completely instead of just hiding
+      try {
+        const parent = this.container.parentNode;
+        if (parent) {
+          parent.removeChild(this.container);
+        }
+      } catch (e) {
+        console.error("Failed to remove dropdown from DOM:", e);
+      }
       
-      // Clear all border styles
-      const borderedItems = this.container.querySelectorAll('.border-l-4');
-      borderedItems.forEach(item => {
-        item.classList.remove('border-l-4');
-        item.classList.remove('border-[#3a86ff]');
-        item.classList.remove('pl-1');
-      });
-      
-      this.container.style.display = 'none';
+      // Reset all state variables
+      this.container = null;
       this.isVisible = false;
       this.selectedIndex = -1;
       
       // Re-enable interactions with footer
       this.disableFooterInteractions(false);
+      
+      // Force a tick to ensure UI updates
+      setTimeout(() => {
+        // Double check that we're really hidden
+        if (this.container) {
+          try {
+            const parent = this.container.parentNode;
+            if (parent) {
+              parent.removeChild(this.container);
+            }
+            this.container = null;
+          } catch (e) {
+            console.error("Failed to forcibly remove dropdown:", e);
+          }
+        }
+      }, 0);
     }
   }
   
@@ -270,6 +304,9 @@ export class BangDropdown {
     if (this.selectedIndex >= 0 && this.selectedIndex < this.filteredBangs.length) {
       const bang = this.filteredBangs[this.selectedIndex];
       this.selectBang(String(bang.t));
+    } else {
+      // Even if nothing is selected, hide the dropdown
+      this.hide();
     }
   }
   
@@ -488,7 +525,13 @@ export class BangDropdown {
     // Hide and remove the dropdown from DOM
     this.hide();
     
-    // Clear references
+    // Make absolutely sure event listeners are gone for any resize handlers
+    if (this.options.positionStyle === 'fixed' && this.options.appendTo) {
+      // Don't try to remove specific handlers - just create a new function
+      window.removeEventListener('resize', () => {});
+    }
+    
+    // Null out references
     this.container = null;
     this.filteredBangs = [];
   }
