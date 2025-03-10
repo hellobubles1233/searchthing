@@ -4552,6 +4552,15 @@ export const bangs = [{
     t: "azlane",
     u: "https://azurlane.koumakan.jp/w/index.php?search={{{s}}}",
   },
+  {
+    c: "Shopping",
+    d: "www.amazon.com",
+    r: 0,
+    s: "Amazon",
+    sc: "Online",
+    t: ["az", "amazon", "amz", "azon"],
+    u: "https://www.amazon.com/s?k={{{s}}}",
+  },
 {
     c: "News",
     d: "azspot.net",
@@ -8590,6 +8599,15 @@ export const bangs = [{
     sc: "Social",
     t: "change",
     u: "https://www.change.org/search?q={{{s}}}",
+  },
+  {
+    c: "AI",
+    d: "www.chatgpt.com",
+    r: 0,
+    s: "ChatGPT",
+    sc: "AI",
+    t: "chatgpt",
+    u: "https://www.chatgpt.com/search?q={{{s}}}",
   },
 {
     c: "News",
@@ -44909,6 +44927,16 @@ export const bangs = [{
     t: "reason",
     u: "http://reason.com/search?q={{{s}}}",
   },
+  {
+    c: "Search",
+    d: "rebang.online",
+    r: 0,
+    s: "Rebang",
+    sc: "Search",
+    t: "rebang",
+    u: "https://rebang.online/search?q={{{s}}}&recursive=true",
+  },
+  
 {
     c: "Shopping",
     d: "www.rebel.pl",
