@@ -10,6 +10,7 @@ import { filterAndSortBangs, getCombinedBangs, clearBangFilterCache } from "../u
 import { BangItem } from "../types/BangItem";
 import { BangDropdown } from "./BangDropdown";
 import { CustomBangManager } from "./CustomBangManager";
+import { setKeyboardNavigationActive } from '../utils/dropdownUtils';
 
 export class SettingsModal {
   private modal: HTMLDivElement | null = null;
@@ -418,6 +419,9 @@ export class SettingsModal {
         }
         
         if (!this.bangDropdown || !this.bangDropdown.isDropdownVisible()) return;
+        
+        // Activate keyboard navigation mode for all keyboard interactions
+        setKeyboardNavigationActive(true);
         
         switch (e.key) {
           case 'ArrowDown':

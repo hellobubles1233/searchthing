@@ -14,6 +14,11 @@ import { BangDropdownOptions } from "../components/BangDropdown";
 // Highlight style classes for dropdown items
 const HIGHLIGHT_CLASSES = ['bg-[#3a0082]/80', 'border-l-4', 'border-[#3a86ff]', 'pl-1'];
 
+// Track when keyboard navigation is active
+let isKeyboardNavigationActive = false;
+// Debounce timer for resetting keyboard navigation state
+let keyboardNavigationTimer: number | null = null;
+
 // Helper for removing highlight styling
 export function removeHighlightClasses(element: HTMLElement): void {
   toggleClasses(element, HIGHLIGHT_CLASSES, false);
@@ -77,8 +82,31 @@ export function toggleFooterInteractions(disable: boolean): void {
   }
 }
 
+// Add a helper function to set keyboard navigation mode
+export function setKeyboardNavigationActive(active: boolean = true): void {
+  isKeyboardNavigationActive = active;
+  
+  // Clear any existing timer
+  if (keyboardNavigationTimer !== null) {
+    clearTimeout(keyboardNavigationTimer);
+  }
+  
+  if (active) {
+    // Set a timer to reset the flag after a delay
+    keyboardNavigationTimer = window.setTimeout(() => {
+      isKeyboardNavigationActive = false;
+      keyboardNavigationTimer = null;
+    }, 1500) as unknown as number;
+  } else {
+    keyboardNavigationTimer = null;
+  }
+}
+
 // Handle mouse leave event for dropdown items
 export function HandleMouseLeave(dropdown: BangDropdown, bangItem: HTMLElement) {
+    // If keyboard navigation is active, don't interfere with mouse events
+    if (isKeyboardNavigationActive) return;
+
     const currentIndex = dropdown.selectedIndex;
 
     // Use setTimeout to allow any keyboard navigation to happen first
@@ -95,6 +123,20 @@ export function HandleMouseLeave(dropdown: BangDropdown, bangItem: HTMLElement) 
 // Handle keyboard navigation in dropdown
 export function Navigate(dropdown: DropdownRenderer, direction: number): void {
     if (!dropdown.container) return;
+    
+    // Set keyboard navigation flag
+    isKeyboardNavigationActive = true;
+    
+    // Clear any existing timer
+    if (keyboardNavigationTimer !== null) {
+        clearTimeout(keyboardNavigationTimer);
+    }
+    
+    // Set a timer to reset the flag after a short delay
+    keyboardNavigationTimer = window.setTimeout(() => {
+        isKeyboardNavigationActive = false;
+        keyboardNavigationTimer = null;
+    }, 1500) as unknown as number; // Cast to number for compatibility
     
     // Get the results container
     const resultsContainer = dropdown.container.querySelector('.overflow-y-auto');
@@ -126,6 +168,9 @@ export function Navigate(dropdown: DropdownRenderer, direction: number): void {
 
 // Handle hover events for dropdown items
 export function HandleHovers(dropdown: DropdownRenderer, index: number, bangItem: HTMLElement) {
+    // If keyboard navigation is active, ignore mouse hover events
+    if (isKeyboardNavigationActive) return;
+
     const prevIndex = dropdown.getSelectedIndex();
 
     // Update selected index

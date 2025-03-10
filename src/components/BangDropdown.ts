@@ -16,7 +16,8 @@ import {
   Navigate,
   positionDropdown,
   applyDropdownStyle,
-  toggleFooterInteractions
+  toggleFooterInteractions,
+  setKeyboardNavigationActive
 } from "../utils/dropdownUtils";
 import { DropdownRenderer } from "../types/DropdownRenderer";
 
@@ -280,14 +281,17 @@ export class BangDropdown implements DropdownRenderer {
   }
   
   public navigateUp(): void {
+    setKeyboardNavigationActive(true);
     Navigate(this, -1);
   }
   
   public navigateDown(): void {
+    setKeyboardNavigationActive(true);
     Navigate(this, 1);
   }
   
   public selectCurrent(): void {
+    setKeyboardNavigationActive(true);
     if (this.selectedIndex >= 0 && this.selectedIndex < this.filteredBangs.length) {
       const bang = this.filteredBangs[this.selectedIndex];
       this.selectBang(String(bang.t));

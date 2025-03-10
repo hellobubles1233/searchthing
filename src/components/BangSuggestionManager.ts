@@ -3,6 +3,7 @@ import { BangDropdown } from "./BangDropdown";
 import { BangItem } from "../types/BangItem";
 import { UserSettings } from "../utils/settings";
 import { bangWorker } from "../utils/workerUtils";
+import { setKeyboardNavigationActive } from "../utils/dropdownUtils";
 
 export interface BangSuggestionOptions {
   onBangSelection: (bangText: string) => void;
@@ -129,6 +130,9 @@ export class BangSuggestionManager {
       const isDropdownVisible = this.bangDropdown.isDropdownVisible();
       
       if (isDropdownVisible) {
+        // Activate keyboard navigation mode for all keyboard interactions
+        setKeyboardNavigationActive(true);
+        
         switch (e.key) {
           case "ArrowDown":
             e.preventDefault();
