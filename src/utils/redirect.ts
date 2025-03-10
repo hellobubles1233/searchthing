@@ -2,7 +2,7 @@ import { bangs } from "../bang";
 import { loadSettings } from "./settings";
 import { getCombinedBangs } from "./bangUtils";
 import { showRedirectLoadingScreen } from "../components/RedirectLoadingScreen";
-
+import queryString from "query-string"; 
 // Get combined bangs (default + custom)
 const userSettings = loadSettings();
 const combinedBangs = getCombinedBangs(userSettings);
@@ -24,20 +24,6 @@ const defaultBang = combinedBangs.find((b) => {
   }
 });
 
-/**
- * Array of recursive function jokes
- */
-const recursiveJokes = [
-  "Why do programmers prefer recursive functions? Because they can solve their own problems without asking for help!",
-  "I was going to tell you a recursive joke... but I'd have to tell you a recursive joke first.",
-  "How do you understand recursion? First, understand recursion.",
-  "What's a recursive programmer's favorite movie? 'Inception', within 'Inception', within 'Inception'...",
-  "Recursive function walks into a bar. Recursive function walks into a bar. Recursive function walks into a bar...",
-  "To understand recursion: See 'recursion'.",
-  "A recursive problem needs a base case. A recursive problem needs a base case. A recursive problem needs... wait, I think I forgot something.",
-  "Why did the recursive function go to therapy? It had too many self-references!",
-  "Recursive functions are like Russian dolls - it's the same thing just getting smaller and smaller until you find a tiny solid one."
-];
 
 /**
  * Helper function to extract query parameters even if URL is malformed
@@ -45,28 +31,49 @@ const recursiveJokes = [
  */
 export function getUrlParameters(): URLSearchParams {
   const currentUrl = window.location.href;
-  console.log("Raw URL:", currentUrl);
   
-  // Check if URL contains parameters without a ? prefix
-  if (currentUrl.includes('=') && !currentUrl.includes('?')) {
-    // Find where parameters start (after the last /)
-    const pathParts = window.location.pathname.split('/');
-    const lastPathPart = pathParts[pathParts.length - 1];
-    
-    if (lastPathPart.includes('=')) {
-      console.log("Detected malformed URL, parameters in path:", lastPathPart);
-      return new URLSearchParams(lastPathPart);
+  // Parse URL with query-string
+  const parsed = queryString.parseUrl(currentUrl, { parseFragmentIdentifier: true });
+  
+  // Create URLSearchParams from the parsed query object
+  const params = new URLSearchParams();
+  
+  // Add all parameters from the query section
+  Object.entries(parsed.query).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      // Handle array values
+      value.forEach(val => val !== null && params.append(key, val));
+    } else if (value !== null) {
+      // Handle string values
+      params.append(key, value);
     }
+  });
+  
+  // If there's a fragment with query params, add those too
+  if (parsed.fragmentIdentifier && parsed.fragmentIdentifier.includes('=')) {
+    const fragmentParams = queryString.parse(parsed.fragmentIdentifier);
+    Object.entries(fragmentParams).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach(val => val !== null && params.append(key, val));
+      } else if (value !== null) {
+        params.append(key, value);
+      }
+    });
   }
   
-  // Regular case - use search params
-  return new URLSearchParams(window.location.search);
+  return params;
 }
+
+type BangRedirectResult = {
+  success: boolean;
+  url?: string;
+  error?: string;
+};
 
 /**
  * Get the redirect URL based on the bang and query
  */
-export function getBangRedirectUrl(): string | null {
+export function getRedirect(): BangRedirectResult {
   // Use custom function to handle malformed URLs
   const urlParams = getUrlParameters();
   const query = urlParams.get("q") || "";
@@ -75,7 +82,7 @@ export function getBangRedirectUrl(): string | null {
   
   if (!query) {
     console.log("No query parameter found");
-    return null;
+    return { success: false, error: "No query parameter found" };
   }
 
   const match = query.match(/!(\S+)/i);
@@ -112,7 +119,7 @@ export function getBangRedirectUrl(): string | null {
   );
   
   console.log("Final search URL:", searchUrl);
-  return searchUrl || null;
+  return { success: !!searchUrl, url: searchUrl };
 }
 
 /**
@@ -124,33 +131,28 @@ export function performRedirect(): boolean {
   const isRecursive = urlParams.get("recursive") === "true";
   const query = urlParams.get("q");
   
-  console.log("performRedirect - Is Recursive:", isRecursive, "Query:", query);
-  
   // If recursive parameter is true, don't redirect
   if (isRecursive) {
-    console.log("Recursive mode detected - not redirecting");
     return false;
   }
-  
-  // Only proceed with redirect if not in recursive mode
-  const searchUrl = getBangRedirectUrl();
-  console.log("Redirect URL:", searchUrl);
-  
-  if (!searchUrl) {
-    console.log("No search URL - not redirecting");
+
+  const redirect = getRedirect();
+
+  if (!redirect.success) {
+    console.log("No redirect URL - not redirecting");
     return false;
   }
-  
-  console.log("Redirecting to:", searchUrl);
+
+  var url = redirect.url || "";
   
   // Show loading screen for better UX
   const match = (query || "").match(/!(\S+)/i);
   const bangName = match?.[1]?.toLowerCase() || "search";
   
   // For redirects, show a brief loading screen before redirecting
-  showRedirectLoadingScreen(bangName, searchUrl)
+  showRedirectLoadingScreen(bangName, url)
     .then(() => {
-      window.location.replace(searchUrl);
+      window.location.replace(url);
     });
   
   return true;
