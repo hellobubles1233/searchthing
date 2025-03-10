@@ -1,9 +1,23 @@
-import { createElement } from "../utils/dom";
+import { 
+  createElement, 
+  removeFromDOM, 
+  showMessage, 
+  getElementAtIndex,
+  applyStyles 
+} from "../utils/dom";
 import { bangs } from "../bang";
 import { filterAndSortBangs, getCombinedBangs } from "../utils/bangUtils";
 import { BangItem } from "../types/BangItem";
 import { loadSettings } from "../utils/settings";
-import { buildBangItemElement, HandleHovers } from "../utils/dropdownUtils";
+import { 
+  buildBangItemElement, 
+  HandleHovers, 
+  HandleMouseLeave, 
+  Navigate,
+  positionDropdown,
+  applyDropdownStyle,
+  toggleFooterInteractions
+} from "../utils/dropdownUtils";
 import { DropdownRenderer } from "../types/DropdownRenderer";
 
 export interface BangDropdownOptions {
@@ -24,6 +38,7 @@ export class BangDropdown implements DropdownRenderer {
   public filteredBangs: BangItem[] = [];
   private documentClickHandler: (e: MouseEvent) => void;
   private tabKeyHandler: (e: KeyboardEvent) => void;
+  private resizeHandler: (() => void) | null = null;
   
   constructor(inputElement: HTMLInputElement, options: BangDropdownOptions = {}) {
     this.inputElement = inputElement;
@@ -57,6 +72,8 @@ export class BangDropdown implements DropdownRenderer {
         }, 10);
       }
     };
+
+    
     
     // Add Tab key handler to select top option
     this.tabKeyHandler = (e: KeyboardEvent) => {
@@ -82,26 +99,15 @@ export class BangDropdown implements DropdownRenderer {
     
     // Add window resize handler for fixed positioning
     if (options.positionStyle === 'fixed' && options.appendTo) {
-      window.addEventListener('resize', () => {
+      this.resizeHandler = () => {
         if (this.isVisible && this.container) {
-          const rect = this.inputElement.getBoundingClientRect();
-          this.container.style.left = `${rect.left}px`;
-          this.container.style.width = `${rect.width}px`;
-          this.container.style.top = `${rect.bottom + 2}px`;
+          positionDropdown(this.container, this.inputElement, this.options);
         }
-      });
+      };
+      window.addEventListener('resize', this.resizeHandler);
     }
   }
-  
-  public clear(): void {
-      if (this.container) {
-        this.container.innerHTML = '';
-    }
 
-    // Reset selected index
-    this.selectedIndex = -1;
-  }
-  
   public getSelectedIndex(): number {
     return this.selectedIndex;
   }
@@ -114,58 +120,51 @@ export class BangDropdown implements DropdownRenderer {
     return this.filteredBangs;
   }
   
+  private clear(): void {
+    if (this.container) {
+      this.container.innerHTML = '';
+    }
+
+    // Reset selected index
+    this.selectedIndex = -1;
+  }
+  
+
+  
   public renderItems(items: BangItem[], callbacks: {
     onClick: (index: number) => void;
     onHover: (index: number) => void;
     onLeave: (index: number) => void;
   }): void {
-      handleRendering(this);
-      this.container?.querySelectorAll('.cursor-pointer').forEach((item, index) => {
-        item.addEventListener('click', () => callbacks.onClick(index));
-        item.addEventListener('mouseenter', () => callbacks.onHover(index));
-        item.addEventListener('mouseleave', () => callbacks.onLeave(index));
+    this.clear();
+
+    if (items.length === 0 && this.container) {
+      showMessage(this.container, "No matching bangs found");
+    } else 
+    {
+      // Create a container for the bang items
+      const resultsContainer = createElement('div', {
+        className: 'overflow-y-auto',
+        style: {
+          maxHeight: this.options.maxHeight
+        }
       });
 
+      items.forEach((bang, index) => {
+        resultsContainer.appendChild(buildBangItemElement(bang));
+      });
 
-
-      function handleRendering(bangDropdown: BangDropdown) {
-        bangDropdown.clear();
-
-        if (items.length === 0) {
-          bangDropdown.showEmptyMessage();
-        } else {
-          // Create a container for the bang items
-        // Create a container for the bang items
-        const resultsContainer = createElement('div', {
-          className: 'overflow-y-auto',
-          style: {
-            maxHeight: bangDropdown.options.maxHeight
-          }
-        });
-
-        items.forEach((bang, index) => {
-          resultsContainer.appendChild(buildBangItemElement(bang));
-        });
-
-        if (bangDropdown.container) {
-          bangDropdown.container.appendChild(resultsContainer);
-        }
+      if (this.container) {
+        this.container.appendChild(resultsContainer);
       }
     }
+    this.container?.querySelectorAll('.cursor-pointer').forEach((item, index) => {
+      item.addEventListener('click', () => callbacks.onClick(index));
+      item.addEventListener('mouseenter', () => callbacks.onHover(index));
+      item.addEventListener('mouseleave', () => callbacks.onLeave(index));
+    });
   }
 
-
-  public showEmptyMessage(): void {
-    if (this.container) {
-      this.container.innerHTML = `
-      <div class="py-3 px-4 text-white/50 text-center italic text-sm">
-      No matching bangs found
-      </div>
-      `;
-    }
-  }
-
-  // Add method to select the top option
   public selectTopOption(): void {
     if (this.filteredBangs.length > 0) {
       const bang = this.filteredBangs[0];
@@ -195,11 +194,7 @@ export class BangDropdown implements DropdownRenderer {
     
     // If there's no query, show a helpful message
     if (!query) {
-      this.container.innerHTML = `
-        <div class="py-3 px-4 text-white/50 text-center italic text-sm">
-          Start typing to search for bangs...
-        </div>
-      `;
+      showMessage(this.container, "Start typing to search for bangs...");
       return;
     }
     
@@ -215,16 +210,14 @@ export class BangDropdown implements DropdownRenderer {
     if (this.container) {
       // If using fixed positioning, update position based on current input position
       if (this.options.positionStyle === 'fixed' && this.options.appendTo) {
-        const rect = this.inputElement.getBoundingClientRect();
-        this.container.style.left = `${rect.left}px`;
-        this.container.style.width = `${rect.width}px`;
-        this.container.style.top = `${rect.bottom + 2}px`; // Adding small offset
+        positionDropdown(this.container, this.inputElement, this.options);
       }
       
-      this.container.style.background = 'linear-gradient(to bottom, rgba(45, 0, 30, 0.9), rgba(0, 0, 0, 0.95))';
+      // Apply background style
+      applyDropdownStyle(this.container);
       
       // Disable interactions with footer elements while dropdown is visible
-      this.disableFooterInteractions(true);
+      toggleFooterInteractions(true);
     }
   }
   
@@ -244,28 +237,30 @@ export class BangDropdown implements DropdownRenderer {
   private populate(): void {
     if (this.container) {
       this.renderItems(this.filteredBangs, {
-        //I don't know what the original functions were here! Help!
-        //I'm not sure if this is correct.
-        onClick: (index: number) => this.selectCurrent(),
-        onHover: (index: number) => HandleHovers(this, index, this.container?.querySelectorAll('.cursor-pointer')[index] as HTMLDivElement),
-        onLeave: () => this.navigate(-1)
+        onClick: (index: number) => {
+          this.selectedIndex = index;
+          this.selectCurrent();
+        },
+        onHover: (index: number) => {
+          const bangItem = getElementAtIndex(this.container, '.cursor-pointer', index);
+          if (bangItem) {
+            HandleHovers(this, index, bangItem);
+          }
+        },
+        onLeave: (index: number) => {
+          const bangItem = getElementAtIndex(this.container, '.cursor-pointer', index);
+          if (bangItem) {
+            HandleMouseLeave(this, bangItem);
+          }
+        }
       });
     }
   }
   
-  
-  
   public hide(): void {
     if (this.container) {
       // Force remove from DOM completely instead of just hiding
-      try {
-        const parent = this.container.parentNode;
-        if (parent) {
-          parent.removeChild(this.container);
-        }
-      } catch (e) {
-        console.error("Failed to remove dropdown from DOM:", e);
-      }
+      removeFromDOM(this.container);
       
       // Reset all state variables
       this.container = null;
@@ -273,32 +268,23 @@ export class BangDropdown implements DropdownRenderer {
       this.selectedIndex = -1;
       
       // Re-enable interactions with footer
-      this.disableFooterInteractions(false);
+      toggleFooterInteractions(false);
       
       // Force a tick to ensure UI updates
       setTimeout(() => {
         // Double check that we're really hidden
-        if (this.container) {
-          try {
-            const parent = this.container.parentNode;
-            if (parent) {
-              parent.removeChild(this.container);
-            }
-            this.container = null;
-          } catch (e) {
-            console.error("Failed to forcibly remove dropdown:", e);
-          }
-        }
+        removeFromDOM(this.container);
+        this.container = null;
       }, 0);
     }
   }
   
   public navigateUp(): void {
-    this.navigate(-1);
+    Navigate(this, -1);
   }
   
   public navigateDown(): void {
-    this.navigate(1);
+    Navigate(this, 1);
   }
   
   public selectCurrent(): void {
@@ -314,45 +300,6 @@ export class BangDropdown implements DropdownRenderer {
   public isDropdownVisible(): boolean {
     return this.isVisible;
   }
-  
-  private navigate(direction: number): void {
-    if (!this.container) return;
-    
-    // Updated selector to match the actual bang items created in createBangItem method
-    const resultsContainer = this.container.querySelector('.overflow-y-auto');
-    if (!resultsContainer) return;
-    
-    const items = resultsContainer.querySelectorAll('.cursor-pointer');
-    if (items.length === 0) return;
-    
-    // Calculate new index
-    const newIndex = Math.max(0, Math.min(items.length - 1, this.selectedIndex + direction));
-    
-    // Clear all highlights and custom styles first
-    items.forEach(item => {
-      item.classList.remove('bg-[#3a0082]/80');
-      item.classList.remove('border-l-4');
-      item.classList.remove('border-[#3a86ff]');
-      item.classList.remove('pl-1'); // Remove extra padding
-    });
-    
-    // Highlight new item with a more prominent color and border to override hover effect
-    const selectedItem = items[newIndex] as HTMLElement;
-    selectedItem.classList.add('bg-[#3a0082]/80');
-    selectedItem.classList.add('border-l-4');
-    selectedItem.classList.add('border-[#3a86ff]');
-    selectedItem.classList.add('pl-1');
-    
-    this.selectedIndex = newIndex;
-    
-    // Scroll item into view if needed
-    selectedItem.scrollIntoView({
-      block: 'nearest',
-      behavior: 'smooth'
-    });
-  }
-  
-
   
   private ensureContainer(): void {
     if (!this.container) {
@@ -372,11 +319,7 @@ export class BangDropdown implements DropdownRenderer {
         
         // Adjust position based on input element's position
         if (this.options.positionStyle === 'fixed') {
-          const rect = this.inputElement.getBoundingClientRect();
-          this.container.style.left = `${rect.left}px`;
-          this.container.style.right = `${window.innerWidth - rect.right}px`;
-          this.container.style.top = `${rect.bottom}px`;
-          this.container.style.width = `${rect.width}px`;
+          positionDropdown(this.container, this.inputElement, this.options);
         }
       } else {
         // Default behavior - append to parent
@@ -400,38 +343,6 @@ export class BangDropdown implements DropdownRenderer {
     }
     this.hide();
   }
-  
-  private disableFooterInteractions(disable: boolean): void {
-    // Find the footer element
-    const footer = document.querySelector('footer');
-    
-    if (footer) {
-      // Apply styles to disable/enable interactions with footer
-      footer.style.pointerEvents = disable ? 'none' : 'auto';
-      
-      // Apply blur effect to footer when dropdown is visible
-      if (disable) {
-        footer.classList.add('footer-blurred');
-        
-        // Add the CSS rule for the blur effect if it doesn't exist yet
-        if (!document.getElementById('footer-blur-style')) {
-          const style = document.createElement('style');
-          style.id = 'footer-blur-style';
-          style.textContent = `
-            .footer-blurred {
-              filter: blur(8px);
-              opacity: 0.6;
-              transition: filter 0.2s ease, opacity 0.2s ease;
-            }
-          `;
-          document.head.appendChild(style);
-        }
-      } else {
-        footer.classList.remove('footer-blurred');
-      }
-    }
-  }
-  
   /**
    * Properly disposes the dropdown and removes all event listeners
    */
@@ -448,9 +359,9 @@ export class BangDropdown implements DropdownRenderer {
     this.hide();
     
     // Make absolutely sure event listeners are gone for any resize handlers
-    if (this.options.positionStyle === 'fixed' && this.options.appendTo) {
-      // Don't try to remove specific handlers - just create a new function
-      window.removeEventListener('resize', () => {});
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+      this.resizeHandler = null;
     }
     
     // Null out references

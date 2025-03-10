@@ -79,9 +79,11 @@ export class SettingsModal {
   public hide(): void {
     if (!this.overlay) return;
     
-    // Force hide and dispose the dropdown
+    // Force hide the dropdown
     if (this.bangDropdown) {
+      // First hide it
       this.bangDropdown.hide();
+      // Then dispose it since we're closing the entire modal
       this.bangDropdown.dispose();
       this.bangDropdown = null;
     }
@@ -383,27 +385,38 @@ export class SettingsModal {
           return;
         }
         
+        // Recreate dropdown if needed
+        if (!this.bangDropdown && this.defaultBangInput) {
+          this.bangDropdown = new BangDropdown(this.defaultBangInput, {
+            maxItems: 10,
+            maxHeight: '35vh',
+            onSelectBang: (bangText) => this.handleBangSelection(bangText),
+            appendTo: document.body,
+            positionStyle: 'fixed',
+            zIndex: 1000
+          });
+        }
+        
+        // Show the dropdown with the current query
         if (this.bangDropdown) {
-          // Always recreate the dropdown for a clean state
-          this.bangDropdown.dispose();
-          
-          // Make sure we have a valid input element before creating a new dropdown
-          if (this.defaultBangInput) {
-            this.bangDropdown = new BangDropdown(this.defaultBangInput, {
-              maxItems: 10,
-              maxHeight: '35vh',
-              onSelectBang: (bangText) => this.handleBangSelection(bangText),
-              appendTo: document.body,
-              positionStyle: 'fixed',
-              zIndex: 1000
-            });
-            this.bangDropdown?.show(query);
-          }
+          this.bangDropdown.show(query);
         }
       });
       
       // Add keyboard navigation handlers for arrow keys and enter key
       this.defaultBangInput.addEventListener('keydown', (e) => {
+        // Recreate dropdown if needed
+        if (!this.bangDropdown && this.defaultBangInput) {
+          this.bangDropdown = new BangDropdown(this.defaultBangInput, {
+            maxItems: 10,
+            maxHeight: '35vh',
+            onSelectBang: (bangText) => this.handleBangSelection(bangText),
+            appendTo: document.body,
+            positionStyle: 'fixed',
+            zIndex: 1000
+          });
+        }
+        
         if (!this.bangDropdown || !this.bangDropdown.isDropdownVisible()) return;
         
         switch (e.key) {
@@ -420,27 +433,13 @@ export class SettingsModal {
             if (this.bangDropdown?.selectedIndex >= 0) {
               this.bangDropdown?.selectCurrent();
             } else {
-              // If nothing is selected but Enter is pressed, forcibly hide the dropdown
-              this.bangDropdown?.hide();
-              // Re-create dropdown to ensure clean state
-              const oldInput = this.defaultBangInput;
-              if (oldInput) {
-                this.bangDropdown = new BangDropdown(oldInput, {
-                  maxItems: 10,
-                  maxHeight: '35vh',
-                  onSelectBang: (bangText) => this.handleBangSelection(bangText),
-                  appendTo: document.body,
-                  positionStyle: 'fixed',
-                  zIndex: 1000
-                });
-              }
-              // Move focus away from the input to trigger a blur event
-              this.defaultBangInput?.blur();
+              // If nothing is selected but Enter is pressed, properly clean up
+              this.cleanupDropdown();
             }
             break;
           case 'Escape':
             e.preventDefault();
-            this.bangDropdown.hide();
+            this.cleanupDropdown();
             break;
         }
       });
@@ -448,10 +447,22 @@ export class SettingsModal {
       // Add focus event handler
       this.defaultBangInput.addEventListener('focus', () => {
         const query = this.defaultBangInput?.value.toLowerCase().replace(/^!/, '') || '';
-        if (query.length > 0 || !this.selectedBangItem) {
-          if (this.bangDropdown) {
-            this.bangDropdown.show(query);
-          }
+        
+        // Recreate dropdown if needed
+        if (!this.bangDropdown && this.defaultBangInput) {
+          this.bangDropdown = new BangDropdown(this.defaultBangInput, {
+            maxItems: 10,
+            maxHeight: '35vh',
+            onSelectBang: (bangText) => this.handleBangSelection(bangText),
+            appendTo: document.body,
+            positionStyle: 'fixed',
+            zIndex: 1000
+          });
+        }
+        
+        // Now we can show it
+        if (this.bangDropdown) {
+          this.bangDropdown.show(query);
         }
       });
       
@@ -493,11 +504,23 @@ export class SettingsModal {
       // Save settings
       this.onSettingsChange(this.settings);
       clearBangFilterCache();
-      
-      // Hide the dropdown
-      if (this.bangDropdown) {
-        this.bangDropdown.hide();
-      }
+    } else {
+      // If no match found, just use the raw bang text
+      this.defaultBangInput.value = `!${bangText}`;
+    }
+    
+    // Make sure dropdown is properly cleaned up
+    this.cleanupDropdown();
+  }
+  
+  /**
+   * Clean up the dropdown properly
+   */
+  private cleanupDropdown(): void {
+    if (this.bangDropdown) {
+      this.bangDropdown.hide();
+      this.bangDropdown.dispose();
+      this.bangDropdown = null;
     }
   }
 } 
