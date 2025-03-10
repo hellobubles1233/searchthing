@@ -397,7 +397,7 @@ export class SettingsModal {
               positionStyle: 'fixed',
               zIndex: 1000
             });
-            this.bangDropdown.show(query);
+            this.bangDropdown?.show(query);
           }
         }
       });
@@ -409,19 +409,19 @@ export class SettingsModal {
         switch (e.key) {
           case 'ArrowDown':
             e.preventDefault(); // Prevent cursor movement in input
-            this.bangDropdown.navigateDown();
+            this.bangDropdown?.navigateDown();
             break;
           case 'ArrowUp':
             e.preventDefault(); // Prevent cursor movement in input
-            this.bangDropdown.navigateUp();
+            this.bangDropdown?.navigateUp();
             break;
           case 'Enter':
             e.preventDefault(); // Prevent form submission
-            if (this.bangDropdown.getSelectedIndex() >= 0) {
-              this.bangDropdown.selectCurrent();
+            if (this.bangDropdown?.selectedIndex >= 0) {
+              this.bangDropdown?.selectCurrent();
             } else {
               // If nothing is selected but Enter is pressed, forcibly hide the dropdown
-              this.bangDropdown.hide();
+              this.bangDropdown?.hide();
               // Re-create dropdown to ensure clean state
               const oldInput = this.defaultBangInput;
               if (oldInput) {

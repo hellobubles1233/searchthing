@@ -3,6 +3,8 @@ import { bangs } from "../bang";
 import { filterAndSortBangs, getCombinedBangs } from "../utils/bangUtils";
 import { BangItem } from "../types/BangItem";
 import { loadSettings } from "../utils/settings";
+import { buildBangItemElement, HandleHovers } from "../utils/dropdownUtils";
+import { DropdownRenderer } from "../types/DropdownRenderer";
 
 export interface BangDropdownOptions {
   maxItems?: number;
@@ -13,13 +15,13 @@ export interface BangDropdownOptions {
   zIndex?: number; // z-index for the dropdown (default: 999)
 }
 
-export class BangDropdown {
-  private container: HTMLDivElement | null = null;
+export class BangDropdown implements DropdownRenderer {
+  public container: HTMLDivElement | null = null;
   private isVisible = false;
-  private selectedIndex = -1;
+  public selectedIndex = -1;
   private inputElement: HTMLInputElement;
-  private options: BangDropdownOptions;
-  private filteredBangs: BangItem[] = [];
+  public options: BangDropdownOptions;
+  public filteredBangs: BangItem[] = [];
   private documentClickHandler: (e: MouseEvent) => void;
   private tabKeyHandler: (e: KeyboardEvent) => void;
   
@@ -72,6 +74,7 @@ export class BangDropdown {
         this.hide();
       }
     };
+
     
     // Attach event listeners
     document.addEventListener("click", this.documentClickHandler);
@@ -90,6 +93,78 @@ export class BangDropdown {
     }
   }
   
+  public clear(): void {
+      if (this.container) {
+        this.container.innerHTML = '';
+    }
+
+    // Reset selected index
+    this.selectedIndex = -1;
+  }
+  
+  public getSelectedIndex(): number {
+    return this.selectedIndex;
+  }
+
+  public setSelectedIndex(index: number): void {
+    this.selectedIndex = index;
+  }
+
+  public getItems(): BangItem[] {
+    return this.filteredBangs;
+  }
+  
+  public renderItems(items: BangItem[], callbacks: {
+    onClick: (index: number) => void;
+    onHover: (index: number) => void;
+    onLeave: (index: number) => void;
+  }): void {
+      handleRendering(this);
+      this.container?.querySelectorAll('.cursor-pointer').forEach((item, index) => {
+        item.addEventListener('click', () => callbacks.onClick(index));
+        item.addEventListener('mouseenter', () => callbacks.onHover(index));
+        item.addEventListener('mouseleave', () => callbacks.onLeave(index));
+      });
+
+
+
+      function handleRendering(bangDropdown: BangDropdown) {
+        bangDropdown.clear();
+
+        if (items.length === 0) {
+          bangDropdown.showEmptyMessage();
+        } else {
+          // Create a container for the bang items
+        // Create a container for the bang items
+        const resultsContainer = createElement('div', {
+          className: 'overflow-y-auto',
+          style: {
+            maxHeight: bangDropdown.options.maxHeight
+          }
+        });
+
+        items.forEach((bang, index) => {
+          resultsContainer.appendChild(buildBangItemElement(bang));
+        });
+
+        if (bangDropdown.container) {
+          bangDropdown.container.appendChild(resultsContainer);
+        }
+      }
+    }
+  }
+
+
+  public showEmptyMessage(): void {
+    if (this.container) {
+      this.container.innerHTML = `
+      <div class="py-3 px-4 text-white/50 text-center italic text-sm">
+      No matching bangs found
+      </div>
+      `;
+    }
+  }
+
   // Add method to select the top option
   public selectTopOption(): void {
     if (this.filteredBangs.length > 0) {
@@ -134,7 +209,7 @@ export class BangDropdown {
     this.filteredBangs = filterAndSortBangs(combinedBangs, query, this.options.maxItems);
     
     // Populate the dropdown
-    this.populateDropdown();
+    this.populate();
     
     // Position and style the dropdown
     if (this.container) {
@@ -162,97 +237,23 @@ export class BangDropdown {
     this.filteredBangs = filteredBangs;
     
     if (this.isVisible && this.container) {
-      this.populateDropdown();
+      this.populate();
+    }
+  }
+
+  private populate(): void {
+    if (this.container) {
+      this.renderItems(this.filteredBangs, {
+        //I don't know what the original functions were here! Help!
+        //I'm not sure if this is correct.
+        onClick: (index: number) => this.selectCurrent(),
+        onHover: (index: number) => HandleHovers(this, index, this.container?.querySelectorAll('.cursor-pointer')[index] as HTMLDivElement),
+        onLeave: () => this.navigate(-1)
+      });
     }
   }
   
-  /**
-   * Populates the dropdown with the current filtered bangs
-   */
-  private populateDropdown(): void {
-    if (!this.container) return;
-    
-    // Clear the container
-    this.container.innerHTML = '';
-    
-    // Reset selected index
-    this.selectedIndex = -1;
-    
-    // If no results, show a message
-    if (this.filteredBangs.length === 0) {
-      this.container.innerHTML = `
-        <div class="py-3 px-4 text-white/50 text-center italic text-sm">
-          No matching bangs found
-        </div>
-      `;
-      return;
-    }
-    
-    // Create a container for the bang items
-    const resultsContainer = createElement('div', {
-      className: 'overflow-y-auto',
-      style: {
-        maxHeight: this.options.maxHeight
-      }
-    });
-    
-    // Add each bang item to the results container
-    this.filteredBangs.forEach((bang, index) => {
-      const bangItem = this.createBangItem(bang);
-      
-      // Add click handler
-      bangItem.addEventListener('click', (e) => {
-        e.stopPropagation(); // Stop event propagation
-        this.selectedIndex = index;
-        this.selectCurrent();
-      });
-      
-      // Add hover handler
-      bangItem.addEventListener('mouseenter', () => {
-        // Store previous selected index
-        const prevIndex = this.selectedIndex;
-        
-        // Update selected index
-        this.selectedIndex = index;
-        
-        // Remove highlight from previous item if it's different
-        if (prevIndex >= 0 && prevIndex !== index && prevIndex < this.filteredBangs.length) {
-          const items = this.container?.querySelector('.overflow-y-auto')?.querySelectorAll('.cursor-pointer');
-          if (items && prevIndex < items.length) {
-            items[prevIndex].classList.remove('bg-[#3a0082]/80');
-            items[prevIndex].classList.remove('border-l-4');
-            items[prevIndex].classList.remove('border-[#3a86ff]');
-            items[prevIndex].classList.remove('pl-1');
-          }
-        }
-        
-        // Highlight current item
-        bangItem.classList.add('bg-[#3a0082]/80');
-      });
-      
-      // Add mouseleave handler to handle hover state properly
-      bangItem.addEventListener('mouseleave', () => {
-        // Only remove highlight if we're not navigating with keyboard
-        // We'll know we're using keyboard if the selectedIndex changes after this
-        const currentIndex = this.selectedIndex;
-        
-        // Use setTimeout to allow any keyboard navigation to happen first
-        setTimeout(() => {
-          if (this.selectedIndex === currentIndex) {
-            // If selectedIndex is still the same, we're not navigating with keyboard
-            // So we can remove the highlight and reset selectedIndex
-            bangItem.classList.remove('bg-[#3a0082]/80');
-            this.selectedIndex = -1;
-          }
-        }, 50);
-      });
-      
-      resultsContainer.appendChild(bangItem);
-    });
-    
-    // Add the results container to the dropdown
-    this.container.appendChild(resultsContainer);
-  }
+  
   
   public hide(): void {
     if (this.container) {
@@ -351,86 +352,7 @@ export class BangDropdown {
     });
   }
   
-  private createBangItem(bang: BangItem): HTMLDivElement {
-    const item = createElement('div', {
-      className: 'p-2 cursor-pointer hover:bg-black/30 transition-colors rounded'
-    });
-    
-    // Store the original bang object
-    const originalBang = bang;
-    
-    // Get the original trigger array if available in the bang's __originalBang property
-    // This is needed to display aliases
-    let originalTriggers: string[] = [];
-    
-    // For backward compatibility, try to get the original triggers if available
-    if (Array.isArray(originalBang.__originalT)) {
-      originalTriggers = originalBang.__originalT;
-    } else if (Array.isArray(originalBang.t)) {
-      originalTriggers = originalBang.t;
-    }
-    
-    // First line: Shortcut and Service name
-    const titleRow = createElement('div', {
-      className: 'flex items-center justify-between'
-    });
-    
-    // In our filtered results, t should now be a string
-    const triggerText = String(bang.t);
-    
-    const shortcut = createElement('span', {
-      className: 'font-mono text-[#3a86ff] font-bold'
-    }, [`!${triggerText}`]);
-    
-    const service = createElement('span', {
-      className: 'text-white font-medium'
-    }, [bang.s]);
-    
-    titleRow.append(shortcut, service);
-    
-    // Second line: Website and Category
-    const detailRow = createElement('div', {
-      className: 'flex items-center justify-between mt-1 text-sm'
-    });
-    
-    const website = createElement('span', {
-      className: 'text-white/60'
-    }, [bang.d]);
-    
-    const category = createElement('span', {
-      className: 'text-white/40 text-xs px-2 py-0.5 bg-[#3a86ff]/10 rounded-full'
-    }, [`${bang.c}${bang.sc !== bang.c ? ` · ${bang.sc}` : ''}`]);
-    
-    detailRow.append(website, category);
-    
-    // Always append the first two rows
-    item.append(titleRow, detailRow);
-    
-    // If there are multiple triggers in the original bang, show them as aliases
-    if (originalTriggers.length > 1) {
-      // Filter out the current trigger to avoid duplication
-      const otherTriggers = originalTriggers.filter(t => t !== triggerText);
-      
-      if (otherTriggers.length > 0) {
-        const aliasesRow = createElement('div', {
-          className: 'text-xs text-white/40 mt-1'
-        });
-        
-        const aliasesLabel = createElement('span', {
-          className: 'mr-1'
-        }, ['Aliases:']);
-        
-        const aliasesList = createElement('span', {
-          className: 'font-mono'
-        }, [otherTriggers.map(t => `!${t}`).join(', ')]);
-        
-        aliasesRow.append(aliasesLabel, aliasesList);
-        item.append(aliasesRow);
-      }
-    }
-    
-    return item;
-  }
+
   
   private ensureContainer(): void {
     if (!this.container) {
@@ -534,9 +456,5 @@ export class BangDropdown {
     // Null out references
     this.container = null;
     this.filteredBangs = [];
-  }
-  
-  public getSelectedIndex(): number {
-    return this.selectedIndex;
   }
 } 
