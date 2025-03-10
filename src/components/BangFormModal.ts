@@ -1,10 +1,11 @@
 import { createElement } from "../utils/dom";
 import { BangItem } from "../types/BangItem";
+import { BaseModal } from "./BaseModal";
 
-export class CustomBangEditor {
-  private modal: HTMLDivElement | null = null;
-  private overlay: HTMLDivElement | null = null;
-  private isVisible = false;
+/**
+ * Modal for adding or editing a bang form
+ */
+export class BangFormModal extends BaseModal {
   private onSave: (bang: BangItem | null, isEdit: boolean) => void;
   private isEditMode = false;
   private originalBang: BangItem | null = null;
@@ -19,6 +20,7 @@ export class CustomBangEditor {
   private urlPatternInput: HTMLInputElement | null = null;
   
   constructor(onSave: (bang: BangItem | null, isEdit: boolean) => void) {
+    super();
     this.onSave = onSave;
   }
   
@@ -29,22 +31,9 @@ export class CustomBangEditor {
   public show(bang?: BangItem): void {
     this.isEditMode = !!bang;
     this.originalBang = bang || null;
-    this.createModal();
-    this.isVisible = true;
     
-    // Add modal to body if not already present
-    if (this.overlay && !document.body.contains(this.overlay)) {
-      document.body.appendChild(this.overlay);
-    }
-    
-    // Apply fade-in animation
-    setTimeout(() => {
-      if (this.overlay) this.overlay.style.opacity = '1';
-      if (this.modal) this.modal.style.transform = 'translateY(0)';
-    }, 50);
-    
-    // Add ESC key handler
-    document.addEventListener('keydown', this.handleEscKey);
+    // Call parent show method to create the modal structure
+    super.show();
     
     // Populate form fields if editing
     if (bang) {
@@ -56,42 +45,24 @@ export class CustomBangEditor {
    * Hides and removes the editor modal
    */
   public hide(): void {
-    if (!this.overlay) return;
+    // Call parent hide method
+    super.hide();
     
-    // Apply fade-out animation
-    this.overlay.style.opacity = '0';
-    if (this.modal) this.modal.style.transform = 'translateY(20px)';
-    
-    // Remove after animation completes
+    // Give time for animation, then clean up
     setTimeout(() => {
+      // Remove ESC key handler
+      document.removeEventListener('keydown', this.handleEscKey);
+      
       if (this.overlay && document.body.contains(this.overlay)) {
         document.body.removeChild(this.overlay);
       }
-      this.isVisible = false;
     }, 300);
-    
-    // Remove ESC key handler
-    document.removeEventListener('keydown', this.handleEscKey);
   }
   
   /**
-   * Handler for ESC key to close the modal
+   * Creates the modal elements as required by BaseModal
    */
-  private handleEscKey = (e: KeyboardEvent): void => {
-    if (e.key === 'Escape' && this.isVisible) {
-      this.hide();
-    }
-  };
-  
-  /**
-   * Creates the modal elements if they don't exist
-   */
-  private createModal(): void {
-    // Always recreate the modal to ensure a clean form
-    if (this.modal && this.overlay && document.body.contains(this.overlay)) {
-      document.body.removeChild(this.overlay);
-    }
-    
+  protected createModal(): void {
     // Create overlay
     this.overlay = createElement('div', {
       className: 'fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center transition-opacity duration-300',
@@ -164,6 +135,9 @@ export class CustomBangEditor {
         this.hide();
       }
     });
+    
+    // Add ESC key handler
+    document.addEventListener('keydown', this.handleEscKey);
   }
   
   /**
@@ -423,12 +397,12 @@ export class CustomBangEditor {
     
     // Focus the input if provided
     if (inputToFocus) {
-      setTimeout(() => inputToFocus.focus(), 10);
+      inputToFocus.focus();
     }
   }
   
   /**
-   * Hide the error message
+   * Hides the error message
    */
   private hideError(): void {
     if (this.errorMessage) {
@@ -437,39 +411,51 @@ export class CustomBangEditor {
   }
   
   /**
-   * Validates the form
+   * Validates the form and shows error messages
    */
   private validateForm(): boolean {
-    // Hide any previous error message
+    // Reset any previous error
     this.hideError();
     
-    // Check required fields
+    // Check if trigger is provided
     if (!this.triggerInput?.value.trim()) {
       this.showError('Trigger is required', this.triggerInput);
       return false;
     }
     
+    // Check if service name is provided
     if (!this.serviceInput?.value.trim()) {
       this.showError('Service name is required', this.serviceInput);
       return false;
     }
     
+    // Check if domain is provided
     if (!this.domainInput?.value.trim()) {
       this.showError('Domain is required', this.domainInput);
       return false;
     }
     
+    // Check if URL pattern is provided
     if (!this.urlPatternInput?.value.trim()) {
       this.showError('URL pattern is required', this.urlPatternInput);
       return false;
     }
     
-    // Check URL pattern has search terms placeholder
+    // Check if URL pattern contains {searchTerms} placeholder
     if (!this.urlPatternInput?.value.includes('{searchTerms}')) {
       this.showError('URL pattern must include {searchTerms} placeholder', this.urlPatternInput);
       return false;
     }
     
     return true;
+  }
+  
+  /**
+   * Handler for ESC key to close the modal
+   */
+  protected handleEscKey(e: KeyboardEvent): void {
+    if (e.key === 'Escape' && this.isVisible) {
+      this.hide();
+    }
   }
 } 

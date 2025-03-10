@@ -1,7 +1,7 @@
 import { createElement } from "../utils/dom";
 import { BangItem } from "../types/BangItem";
 import { UserSettings, loadSettings, saveSettings } from "../utils/settings";
-import { CustomBangEditor } from "./CustomBangEditor";
+import { BangFormModal } from "./BangFormModal";
 import { clearBangFilterCache } from "../utils/bangUtils";
 
 export class CustomBangManager {
@@ -11,14 +11,14 @@ export class CustomBangManager {
   private settings: UserSettings;
   private bangList: HTMLDivElement | null = null;
   private onSettingsChange: (settings: UserSettings) => void;
-  private bangEditor: CustomBangEditor | null = null;
+  private bangFormModal: BangFormModal | null = null;
   private confirmationDialog: HTMLDivElement | null = null;
   private pendingDeleteBang: BangItem | null = null;
 
   constructor(onSettingsChange: (settings: UserSettings) => void = () => {}) {
     this.settings = loadSettings();
     this.onSettingsChange = onSettingsChange;
-    this.bangEditor = new CustomBangEditor((bang: BangItem | null, isEdit: boolean) => {
+    this.bangFormModal = new BangFormModal((bang: BangItem | null, isEdit: boolean) => {
       this.handleBangSave(bang, isEdit);
     });
   }
@@ -138,8 +138,8 @@ export class CustomBangManager {
     ]);
     
     addButton.addEventListener('click', () => {
-      if (this.bangEditor) {
-        this.bangEditor.show();
+      if (this.bangFormModal) {
+        this.bangFormModal.show();
       }
     });
     
@@ -257,8 +257,8 @@ export class CustomBangManager {
     }, ['✏️']);
     
     editButton.addEventListener('click', () => {
-      if (this.bangEditor) {
-        this.bangEditor.show(bang);
+      if (this.bangFormModal) {
+        this.bangFormModal.show(bang);
       }
     });
     
