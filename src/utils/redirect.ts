@@ -40,14 +40,6 @@ const recursiveJokes = [
 ];
 
 /**
- * Get a random joke about recursive functions
- */
-function getRandomRecursiveJoke(): string {
-  const randomIndex = Math.floor(Math.random() * recursiveJokes.length);
-  return recursiveJokes[randomIndex];
-}
-
-/**
  * Helper function to extract query parameters even if URL is malformed
  * (handles cases where ? is missing before parameters)
  */
