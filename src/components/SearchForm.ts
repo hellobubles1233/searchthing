@@ -1,6 +1,6 @@
 import { createElement } from "../utils/dom";
 import { SettingsModal } from "./SettingsModal";
-import { loadSettings, UserSettings } from "../utils/settings";
+import { loadSettings, UserSettings, saveSettings } from "../utils/settings";
 import { getUrlParameters, performRedirect } from "../utils/redirect";
 import { CustomBangManager } from "./CustomBangManager";
 import { bangWorker } from "../utils/workerUtils";
@@ -43,6 +43,9 @@ export class SearchForm {
       // Update local settings when custom bangs change
       this.settings = newSettings;
       
+      // Save settings to localStorage to persist across sessions
+      saveSettings(this.settings);
+      
       // Re-initialize bang suggestion manager when settings change
       this.reinitializeBangSuggestionManager();
     });
@@ -51,6 +54,12 @@ export class SearchForm {
     this.settingsModal = new SettingsModal((newSettings) => {
       // Update local settings when modal settings change
       this.settings = newSettings;
+      
+      // Save settings to localStorage to persist across sessions
+      saveSettings(this.settings);
+      
+      // Re-initialize the bang suggestion manager to reflect new settings
+      this.reinitializeBangSuggestionManager();
     });
     
     // Create and initialize the search header component
@@ -214,8 +223,5 @@ export class SearchForm {
     
     // Initialize a new bang suggestion manager
     this.initializeBangSuggestionManager();
-    
-    // Focus the input
-    this.searchInput.focus();
   }
 } 

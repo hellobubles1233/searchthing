@@ -1,5 +1,5 @@
 import { createElement } from "../utils/dom";
-import { UserSettings } from "../utils/settings";
+import { UserSettings, loadSettings } from "../utils/settings";
 
 export interface SearchInputOptions {
   onInput?: (value: string) => void;
@@ -73,6 +73,9 @@ export class SearchInputComponent {
     this.form.addEventListener("submit", (e) => {
       e.preventDefault();
       let query = this.searchInput.value.trim();
+      
+      // Reload settings to ensure we have the latest
+      this.settings = loadSettings();
       
       // If no bang is specified and a default bang is set, prepend it
       if (!query.includes('!') && this.settings.defaultBang) {

@@ -115,8 +115,9 @@ export class BangRedirector {
    */
   public getRedirect(urlParams: URLSearchParams): BangRedirectResult {
     try {
-      // Refresh settings on each request to ensure we have latest
+      // Fully refresh all internal data on each request to ensure we have latest settings
       this.settings = loadSettings();
+      this.combinedBangs = getCombinedBangs(this.settings);
       this.defaultBang = findDefaultBang(this.settings);
 
       // Use custom function to handle malformed URLs
@@ -238,6 +239,8 @@ export function getUrlParameters(): URLSearchParams {
 }
 
 export function performRedirect(): boolean {
-  const urlParams = defaultRedirector.getUrlParameters();
-  return defaultRedirector.performRedirect(urlParams);
+  // Create a fresh redirector instance to ensure we always have the latest settings
+  const freshRedirector = new BangRedirector();
+  const urlParams = freshRedirector.getUrlParameters();
+  return freshRedirector.performRedirect(urlParams);
 } 

@@ -35,6 +35,10 @@ export class SettingsModal {
   constructor(onSettingsChange: (settings: UserSettings) => void = () => {}) {
     this.settings = loadSettings();
     this.onSettingsChange = onSettingsChange;
+    
+    // Add explicit save to ensure settings are persisted properly
+    saveSettings(this.settings);
+    
     this.customBangManager = new CustomBangManager(this.handleCustomBangsChange);
   }
   
@@ -52,7 +56,7 @@ export class SettingsModal {
     }
   };
   
-  /**
+  /*
    * Creates and shows the settings modal
    */
   public show(): void {
@@ -169,26 +173,24 @@ export class SettingsModal {
     
     // Add more settings here as needed
     
-    // Modal footer
+    // Modal footer with helpful text instead of save button
     const footer = createElement('div', {
-      className: 'bg-black/30 px-6 py-4 flex justify-end'
+      className: 'bg-black/30 px-6 py-4 flex items-center justify-between'
     });
     
-    const saveButton = createElement('button', {
-      className: 'bg-[#3a86ff] hover:bg-[#2a76ef] text-white px-4 py-2 rounded transition-colors',
+    const helpText = createElement('p', {
+      className: 'text-white/70 text-sm italic'
+    }, ['Settings are automatically saved when changed']);
+    
+    const closeButtonFooter = createElement('button', {
+      className: 'bg-black/30 hover:bg-black/50 text-white px-4 py-2 rounded transition-colors',
       type: 'button'
-    }, ['Save Settings']);
-    saveButton.addEventListener('click', () => {
-      // Process the input to find the best match or default to Google
-      this.processAndSaveBangSetting();
-      
-      // Save all settings
-      saveSettings(this.settings);
-      this.onSettingsChange(this.settings);
+    }, ['Close']);
+    closeButtonFooter.addEventListener('click', () => {
       this.hide();
     });
     
-    footer.appendChild(saveButton);
+    footer.append(helpText, closeButtonFooter);
     
     // Assemble modal
     this.modal.append(header, content, footer);
@@ -288,6 +290,40 @@ export class SettingsModal {
     
     customBangsButtonContainer.appendChild(customBangsButton);
     
+    // Create current bang service label
+    const currentBangContainer = createElement('div', {
+      className: 'bg-[#3a0082]/20 rounded-lg p-3 mb-3 flex items-center'
+    });
+    
+    const currentBangLabel = createElement('div', {
+      className: 'flex-1'
+    });
+    
+    const currentBangPrefix = createElement('span', {
+      className: 'text-white/70 text-sm'
+    }, ['Currently using: ']);
+    
+    // Get current bang service name
+    let currentBangService = 'Google (default)';
+    if (this.settings.defaultBang) {
+      const combinedBangs = getCombinedBangs(this.settings);
+      const currentBang = combinedBangs.find(b => {
+        const bangValue = this.settings.defaultBang || '';
+        return (Array.isArray(b.t) ? b.t.includes(bangValue) : b.t === bangValue);
+      });
+      if (currentBang) {
+        currentBangService = currentBang.s;
+      }
+    }
+    
+    const currentBangServiceEl = createElement('span', {
+      className: 'text-[#3a86ff] font-bold',
+      id: 'current-default-bang-label'
+    }, [currentBangService]);
+    
+    currentBangLabel.append(currentBangPrefix, currentBangServiceEl);
+    currentBangContainer.appendChild(currentBangLabel);
+    
     // Create input wrapper for relative positioning
     const inputWrapper = createElement('div', {
       className: 'relative mb-2'
@@ -296,7 +332,7 @@ export class SettingsModal {
     // Create the text input for bang search
     this.defaultBangInput = createElement('input', {
       type: 'text',
-      placeholder: 'Type to search (e.g., "google" or "g")',
+      placeholder: 'Type a bang trigger (e.g., "g" for Google) or search by name',
       className: 'w-full px-4 py-3 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded-xl border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
       autocomplete: 'off',
       spellcheck: 'false'
@@ -333,7 +369,7 @@ export class SettingsModal {
     
     // Append elements to input wrapper
     inputWrapper.append(this.defaultBangInput, clearButton);
-    section.append(label, description, customBangsButtonContainer, inputWrapper);
+    section.append(label, description, customBangsButtonContainer, currentBangContainer, inputWrapper);
     
     // Initialize the BangDropdown component
     if (this.defaultBangInput) {
@@ -348,42 +384,37 @@ export class SettingsModal {
       
       // Add input event handler for showing dropdown and real-time matching
       this.defaultBangInput.addEventListener('input', () => {
-        const query = this.defaultBangInput?.value.toLowerCase().replace(/^!/, '') || '';
+        // Clean input - strip special characters and extra spaces
+        const rawInput = this.defaultBangInput?.value || '';
+        const cleanedInput = rawInput.toLowerCase().replace(/^!+/, '').trim();
         
-        // Hide dropdown for any query with spaces, hyphens, or other separators
-        if (query.includes(' ') || query.includes('-') || query.includes(':')) {
+        // Extract bang part - be more lenient by taking the first word before any separator
+        const bangPart = cleanedInput.split(/[ \-:;,]/)[0].trim();
+        
+        // Skip dropdown if input is empty
+        if (!bangPart) {
           if (this.bangDropdown) {
             this.bangDropdown.hide();
-            
-            // Force blur to ensure dropdown stays hidden
-            setTimeout(() => {
-              if (this.bangDropdown?.isDropdownVisible()) {
-                this.bangDropdown.hide();
-                this.defaultBangInput?.blur();
-                setTimeout(() => this.defaultBangInput?.focus(), 10);
-              }
-            }, 50);
           }
           return;
         }
         
         // Try to match the current input and update selectedBangItem in real-time
-        // This ensures even if the user doesn't select from dropdown, we capture their intent
-        if (query.length > 0) {
-          const directMatch = bangs.find(b => 
-            typeof b.t === 'string' ? b.t.toLowerCase() === query : b.t.some(t => t.toLowerCase() === query)
-          );
-          if (directMatch) {
-            this.selectedBangItem = directMatch;
-          }
-        }
+        const combinedBangs = getCombinedBangs(this.settings);
+        const directMatch = combinedBangs.find(b => 
+          typeof b.t === 'string' 
+            ? b.t.toLowerCase() === bangPart 
+            : b.t.some(t => t.toLowerCase() === bangPart)
+        );
         
-        // Skip showing dropdown if query is too short and we already have a selection
-        if (query.length < 1 && this.selectedBangItem) {
-          if (this.bangDropdown) {
-            this.bangDropdown.hide();
-          }
-          return;
+        if (directMatch) {
+          this.selectedBangItem = directMatch;
+          
+          // Auto-save on direct match
+          const trigger = bangPart;
+          this.settings.defaultBang = trigger;
+          this.onSettingsChange(this.settings);
+          clearBangFilterCache();
         }
         
         // Recreate dropdown if needed
@@ -398,9 +429,9 @@ export class SettingsModal {
           });
         }
         
-        // Show the dropdown with the current query
+        // Show dropdown with the clean query
         if (this.bangDropdown) {
-          this.bangDropdown.show(query);
+          this.bangDropdown.show(bangPart);
         }
       });
       
@@ -502,10 +533,18 @@ export class SettingsModal {
     
     if (matchingBang) {
       this.selectedBangItem = matchingBang;
-      this.defaultBangInput.value = `!${bangText} - ${matchingBang.s}`;
-      this.settings.defaultBang = bangText;
       
-      // Save settings
+      // Update display with formatted bang name
+      this.defaultBangInput.value = `!${bangText} - ${matchingBang.s}`;
+      
+      // Update bang label if we have one
+      const bangLabel = document.getElementById('current-default-bang-label');
+      if (bangLabel) {
+        bangLabel.textContent = matchingBang.s;
+      }
+      
+      // Save the setting automatically
+      this.settings.defaultBang = bangText;
       this.onSettingsChange(this.settings);
       clearBangFilterCache();
     } else {
