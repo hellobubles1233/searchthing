@@ -368,6 +368,32 @@ export class SettingsModal {
         }
       });
       
+      // Add keyboard navigation handlers for arrow keys and enter key
+      this.defaultBangInput.addEventListener('keydown', (e) => {
+        if (!this.bangDropdown || !this.bangDropdown.isDropdownVisible()) return;
+        
+        switch (e.key) {
+          case 'ArrowDown':
+            e.preventDefault(); // Prevent cursor movement in input
+            this.bangDropdown.navigateDown();
+            break;
+          case 'ArrowUp':
+            e.preventDefault(); // Prevent cursor movement in input
+            this.bangDropdown.navigateUp();
+            break;
+          case 'Enter':
+            e.preventDefault(); // Prevent form submission
+            if (this.bangDropdown.getSelectedIndex() >= 0) {
+              this.bangDropdown.selectCurrent();
+            }
+            break;
+          case 'Escape':
+            e.preventDefault();
+            this.bangDropdown.hide();
+            break;
+        }
+      });
+      
       // Add focus event handler
       this.defaultBangInput.addEventListener('focus', () => {
         const query = this.defaultBangInput?.value.toLowerCase().replace(/^!/, '') || '';
