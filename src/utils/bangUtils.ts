@@ -1,5 +1,5 @@
 import { BangItem } from "../types/BangItem";
-import { UserSettings } from "./settings";
+import { loadSettings, UserSettings } from "./settings";
 import { bangs as defaultBangs } from "../bang";
 import { bangWorker } from "./workerUtils";
 
@@ -86,6 +86,39 @@ export function getCombinedBangs(settings: UserSettings): BangItem[] {
   // Combine the filtered default bangs with custom bangs
   return [...filteredDefaultBangs, ...settings.customBangs];
 }
+
+export function findBang(bang: string): BangItem | undefined {
+  // Since this is a redirect service where each page load results in at most one search,
+  // we always load fresh settings to ensure we have the most current configuration
+
+  const combinedBangs = getCombinedBangs(loadSettings());
+  return combinedBangs.find((b) => {
+    if (Array.isArray(b.t)) {
+      return b.t.includes(bang);
+    } else {
+      return b.t === bang;
+    }
+  });
+}
+
+export const FALLBACK_BANG = "g";
+
+export function findDefaultBang(settings: UserSettings): BangItem | undefined {
+  // First try to find the user's preferred default bang
+  var defaultBangString = settings.defaultBang;
+  if (!defaultBangString) {
+    defaultBangString = FALLBACK_BANG;
+  }
+  const userDefaultBang = findBang(defaultBangString);
+  // If found, return it
+  if (userDefaultBang) {
+    return userDefaultBang;
+  }
+
+  // Otherwise fall back to Google
+  return findBang(FALLBACK_BANG);
+}
+
 
 /**
  * Clears the bang filter cache when settings change

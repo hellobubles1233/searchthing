@@ -1,9 +1,12 @@
 import { bangs } from "../bang";
 import { loadSettings, UserSettings } from "./settings";
-import { getCombinedBangs } from "./bangUtils";
+import { getCombinedBangs, findDefaultBang, findBang, FALLBACK_BANG } from "./bangUtils";
 import { showRedirectLoadingScreen } from "../components/RedirectLoadingScreen";
 import queryString from "query-string";
 import { BangItem } from "../types/BangItem";
+
+//Fall back to google if no bang is found. 
+
 
 /**
  * Result object for bang redirect operations
@@ -31,50 +34,16 @@ export class BangRedirector {
     try {
       this.settings = loadSettings();
       this.combinedBangs = getCombinedBangs(this.settings);
-      this.defaultBang = this.findDefaultBang();
+      this.defaultBang = findDefaultBang(this.settings);
     } catch (error) {
       console.error("Failed to initialize BangRedirector:", error);
       // Set fallbacks if initialization fails
       this.settings = { customBangs: [] };
-      this.combinedBangs = [...bangs]; // Use default bangs as fallback
-      this.defaultBang = this.findGoogleBang();
+      this.combinedBangs = [...bangs]; // Use just the pre-defined bangs as fallback
+      this.defaultBang = findBang("g");
     }
   }
 
-  /**
-   * Find the default bang based on user settings
-   */
-  private findDefaultBang(): BangItem | undefined {
-    // First try to find the user's preferred default bang
-    const userDefaultBang = this.combinedBangs.find((b) => {
-      if (Array.isArray(b.t)) {
-        return b.t.some(trigger => trigger === this.settings.defaultBang);
-      } else {
-        return b.t === this.settings.defaultBang;
-      }
-    });
-
-    // If found, return it
-    if (userDefaultBang) {
-      return userDefaultBang;
-    }
-
-    // Otherwise fall back to Google
-    return this.findGoogleBang();
-  }
-
-  /**
-   * Find the Google bang as a fallback
-   */
-  private findGoogleBang(): BangItem | undefined {
-    return this.combinedBangs.find((b) => {
-      if (Array.isArray(b.t)) {
-        return b.t.includes("g");
-      } else {
-        return b.t === "g";
-      }
-    });
-  }
 
   /**
    * Helper function to extract query parameters even if URL is malformed
@@ -144,15 +113,13 @@ export class BangRedirector {
    * Get the redirect URL based on the bang and query
    * Refresh settings each time to ensure we have the latest
    */
-  public getRedirect(): BangRedirectResult {
+  public getRedirect(urlParams: URLSearchParams): BangRedirectResult {
     try {
       // Refresh settings on each request to ensure we have latest
       this.settings = loadSettings();
-      this.combinedBangs = getCombinedBangs(this.settings);
-      this.defaultBang = this.findDefaultBang();
+      this.defaultBang = findDefaultBang(this.settings);
 
       // Use custom function to handle malformed URLs
-      const urlParams = this.getUrlParameters();
       const query = urlParams.get("q") || "";
       
       if (!query) {
@@ -160,16 +127,12 @@ export class BangRedirector {
       }
 
       const match = query.match(/!(\S+)/i);
-      const bangCandidate = match?.[1]?.toLowerCase();
+
+      //Either the bang from the query, the default bang, or the fallback bang if all else fails.
+      const bangCandidate = match?.[1]?.toLowerCase() ?? this.defaultBang?.t[0] ?? FALLBACK_BANG;
       
-      // Find bang by checking if the bangCandidate matches any trigger
-      const selectedBang = this.combinedBangs.find((b) => {
-        if (Array.isArray(b.t)) {
-          return b.t.some(trigger => trigger.toLowerCase() === bangCandidate);
-        } else {
-          return b.t.toLowerCase() === bangCandidate;
-        }
-      }) ?? this.defaultBang;
+      // Find bang by checking if the bangCandidate matches any trigger. If not, use the default bang.
+      const selectedBang = findBang(bangCandidate) ?? this.defaultBang;
       
       if (!selectedBang) {
         return { 
@@ -190,7 +153,6 @@ export class BangRedirector {
       const searchUrl = selectedBang.u.replace(
         /{{{s}}}|{searchTerms}/g,
         encodeURIComponent(cleanQuery)
-        // No longer replacing %2F with / for security reasons
       );
       
       // Validate the URL is safe to redirect to
@@ -218,20 +180,19 @@ export class BangRedirector {
 
   /**
    * Redirect the browser to the appropriate search URL
+   * This is the main function that should be used to redirect the user.
    */
-  public performRedirect(): boolean {
+  public performRedirect(urlParams: URLSearchParams): boolean {
     try {
       // Use custom function to handle malformed URLs
-      const urlParams = this.getUrlParameters();
       const isRecursive = urlParams.get("recursive") === "true";
-      const query = urlParams.get("q");
       
       // If recursive parameter is true, don't redirect
       if (isRecursive) {
         return false;
       }
 
-      const redirect = this.getRedirect();
+      const redirect = this.getRedirect(urlParams);
 
       if (!redirect.success || !redirect.url) {
         console.error("No valid redirect URL:", redirect.error);
@@ -276,10 +237,7 @@ export function getUrlParameters(): URLSearchParams {
   return defaultRedirector.getUrlParameters();
 }
 
-export function getRedirect(): BangRedirectResult {
-  return defaultRedirector.getRedirect();
-}
-
 export function performRedirect(): boolean {
-  return defaultRedirector.performRedirect();
+  const urlParams = defaultRedirector.getUrlParameters();
+  return defaultRedirector.performRedirect(urlParams);
 } 
