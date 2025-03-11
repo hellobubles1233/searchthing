@@ -122,8 +122,6 @@ export function getCombinedBangs(settings: UserSettings): BangItem[] {
     if (!finalUnique.has(key)) {
       finalUnique.set(key, bang);
       result.push(bang);
-    } else {
-      console.warn(`getCombinedBangs: Found duplicate default bang: ${key}`);
     }
   }
   
@@ -133,8 +131,6 @@ export function getCombinedBangs(settings: UserSettings): BangItem[] {
     if (!finalUnique.has(key)) {
       finalUnique.set(key, bang);
       result.push(bang);
-    } else {
-      console.warn(`getCombinedBangs: Found duplicate custom bang: ${key}`);
     }
   }
   
