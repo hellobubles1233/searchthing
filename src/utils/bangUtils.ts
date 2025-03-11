@@ -65,21 +65,36 @@ export function getCombinedBangs(settings: UserSettings): BangItem[] {
     return defaultBangs;
   }
 
+  console.log(`getCombinedBangs: Processing ${settings.customBangs.length} custom bangs`);
+
   // Create a map of custom bangs by trigger for quick lookup
   const customBangMap = new Map<string, BangItem>();
   
   // Also create a Set to track unique custom bangs (by reference)
   const uniqueCustomBangs = new Set<BangItem>();
   
+  // Create a map of custom bangs by domain and service for absolute deduplication
+  const customUniqueMap = new Map<string, BangItem>();
+  
   settings.customBangs.forEach((bang: BangItem) => {
-    // Handle both string and array of triggers
-    const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
-    triggers.forEach((trigger: string) => {
-      customBangMap.set(trigger, bang);
-    });
+    // First, ensure this exact combo doesn't already exist
+    const uniqueKey = `${bang.s}:${bang.d}`;
+    console.log(`getCombinedBangs: Processing custom bang ${uniqueKey} with trigger ${Array.isArray(bang.t) ? bang.t.join(',') : bang.t}`);
     
-    // Add to our set of unique custom bangs
-    uniqueCustomBangs.add(bang);
+    if (!customUniqueMap.has(uniqueKey)) {
+      customUniqueMap.set(uniqueKey, bang);
+      
+      // Handle both string and array of triggers
+      const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
+      triggers.forEach((trigger: string) => {
+        customBangMap.set(trigger, bang);
+      });
+      
+      // Add to our set of unique custom bangs
+      uniqueCustomBangs.add(bang);
+    } else {
+      console.warn(`Duplicate custom bang found! ${uniqueKey} - This will be skipped`);
+    }
   });
 
   // Filter out default bangs that have been overridden by custom bangs
@@ -90,8 +105,43 @@ export function getCombinedBangs(settings: UserSettings): BangItem[] {
     return !triggers.some(trigger => customBangMap.has(trigger));
   });
 
+  console.log(`getCombinedBangs: Filtered down to ${filteredDefaultBangs.length} default bangs after removing overrides`);
+
+  // Convert the Map to array 
+  const uniqueCustomBangsArray = Array.from(customUniqueMap.values());
+  
+  console.log(`getCombinedBangs: Adding ${uniqueCustomBangsArray.length} unique custom bangs`);
+  
+  // Extra verification check to make sure we don't have duplicates
+  const finalUnique = new Map<string, BangItem>();
+  const result: BangItem[] = [];
+  
+  // First add filtered default bangs
+  for (const bang of filteredDefaultBangs) {
+    const key = `${bang.d}:${bang.s}`;
+    if (!finalUnique.has(key)) {
+      finalUnique.set(key, bang);
+      result.push(bang);
+    } else {
+      console.warn(`getCombinedBangs: Found duplicate default bang: ${key}`);
+    }
+  }
+  
+  // Then add custom bangs
+  for (const bang of uniqueCustomBangsArray) {
+    const key = `${bang.d}:${bang.s}`;
+    if (!finalUnique.has(key)) {
+      finalUnique.set(key, bang);
+      result.push(bang);
+    } else {
+      console.warn(`getCombinedBangs: Found duplicate custom bang: ${key}`);
+    }
+  }
+  
+  console.log(`getCombinedBangs: Final combined bangs count: ${result.length}`);
+  
   // Combine the filtered default bangs with unique custom bangs
-  return [...filteredDefaultBangs, ...Array.from(uniqueCustomBangs)];
+  return result;
 }
 
 export function findBang(bang: string): BangItem | undefined {
@@ -420,6 +470,8 @@ export function filterAndSortBangs(
     const key = `${bang.d}:${bang.s}`;
     if (!combinedMap.has(key)) {
       combinedMap.set(key, bang);
+    } else {
+      console.warn(`filterAndSortBangs: Prevented duplicate category match: ${key}`);
     }
   });
   
@@ -428,11 +480,14 @@ export function filterAndSortBangs(
     const key = `${bang.d}:${bang.s}`;
     if (!combinedMap.has(key)) {
       combinedMap.set(key, bang);
+    } else {
+      console.warn(`filterAndSortBangs: Prevented duplicate sorted match: ${key}`);
     }
   });
   
   // Convert back to array and limit to maxItems
   const combinedBangs = Array.from(combinedMap.values());
+  console.log(`filterAndSortBangs: Total after dedup: ${combinedBangs.length}`);
   
   // Take the top results
   const results = combinedBangs.slice(0, maxItems);

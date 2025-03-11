@@ -6,7 +6,7 @@ import {
   applyStyles 
 } from "../utils/dom";
 import { bangs } from "../bang";
-import { clearBangFilterCache, filterAndSortBangs, getCombinedBangs } from "../utils/bangUtils";
+import { filterAndSortBangs, getCombinedBangs, clearBangFilterCache } from "../utils/bangUtils";
 import { BangItem } from "../types/BangItem";
 import { loadSettings } from "../utils/settings";
 import { 
@@ -199,13 +199,39 @@ export class BangDropdown implements DropdownRenderer {
       return;
     }
     
-    // Clear the cache to ensure fresh results 
-    clearBangFilterCache();
+    // Force clear the cache EVERY time to be absolutely sure we're getting fresh results
+    console.log("BangDropdown: Clearing filter cache...");
+    try {
+      clearBangFilterCache();
+    } catch (e) {
+      console.error("Error clearing bang filter cache:", e);
+    }
     
     // Filter and sort the bangs based on the query
+    console.log("BangDropdown: Loading settings and fetching bangs...");
     const settings = loadSettings();
     const combinedBangs = getCombinedBangs(settings);
+    console.log(`BangDropdown: Total combined bangs: ${combinedBangs.length}`);
+    
     this.filteredBangs = filterAndSortBangs(combinedBangs, query, this.options.maxItems);
+    console.log(`BangDropdown: Filtered bangs: ${this.filteredBangs.length}`);
+    
+    // Check for duplicates in the filtered bangs
+    const seenBangs = new Map<string, BangItem>();
+    const duplicates: string[] = [];
+    
+    this.filteredBangs.forEach(bang => {
+      const key = `${bang.d}:${bang.s}`;
+      if (seenBangs.has(key)) {
+        duplicates.push(key);
+      } else {
+        seenBangs.set(key, bang);
+      }
+    });
+    
+    if (duplicates.length > 0) {
+      console.warn(`BangDropdown: Found ${duplicates.length} duplicates before population:`, duplicates);
+    }
     
     // Populate the dropdown
     this.populate();
@@ -240,21 +266,28 @@ export class BangDropdown implements DropdownRenderer {
 
   private populate(): void {
     if (this.container) {
-      // Ensure there are no duplicates in filtered bangs before rendering
-      const uniqueKeys = new Set<string>();
-      const uniqueFilteredBangs: BangItem[] = [];
+      // SUPER AGGRESSIVE DEDUPLICATION
+      // We'll use domain+service as the key, and also check for trigger equality
+      const seenKeys = new Set<string>();
+      const dedupedBangs: BangItem[] = [];
       
-      // Secondary deduplication logic to ensure no duplicates are rendered
-      this.filteredBangs.forEach(bang => {
+      for (const bang of this.filteredBangs) {
+        // Create composite key for domain and service
         const key = `${bang.d}:${bang.s}`;
-        if (!uniqueKeys.has(key)) {
-          uniqueKeys.add(key);
-          uniqueFilteredBangs.push(bang);
+        
+        // If we haven't seen this exact combo before, add it
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          dedupedBangs.push(bang);
+        } else {
+          console.warn(`Dropping duplicate bang: ${key}`);
         }
-      });
+      }
+      
+      console.log(`Original bangs: ${this.filteredBangs.length}, After dedup: ${dedupedBangs.length}`);
       
       // Use the deduplicated array for rendering
-      this.renderItems(uniqueFilteredBangs, {
+      this.renderItems(dedupedBangs, {
         onClick: (index: number) => {
           this.selectedIndex = index;
           this.selectCurrent();
