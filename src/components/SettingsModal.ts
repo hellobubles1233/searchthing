@@ -9,7 +9,7 @@ import {
 import { filterAndSortBangs, getCombinedBangs, clearBangFilterCache } from "../utils/bangUtils";
 import { BangItem } from "../types/BangItem";
 import { BangDropdown } from "./BangDropdown";
-import { CustomBangManager } from "./CustomBangManager";
+import { CustomBangModal } from "./CustomBangModal";
 import { setKeyboardNavigationActive } from '../utils/dropdownUtils';
 import { MainModal } from "./MainModal";
 
@@ -21,7 +21,7 @@ export class SettingsModal extends MainModal {
   private defaultBangInput: HTMLInputElement | null = null;
   private bangDropdown: BangDropdown | null = null;
   private selectedBangItem: BangItem | null = null;
-  private customBangManager: CustomBangManager;
+  private customBangManagerModal: CustomBangModal;
   
   constructor(onSettingsChange: (settings: UserSettings) => void = () => {}) {
     super({
@@ -43,7 +43,7 @@ export class SettingsModal extends MainModal {
     // Add explicit save to ensure settings are persisted properly
     saveSettings(this.settings);
     
-    this.customBangManager = new CustomBangManager(this.handleCustomBangsChange);
+    this.customBangManagerModal = new CustomBangModal(this.handleCustomBangsChange);
   }
   
   /**
@@ -165,7 +165,7 @@ export class SettingsModal extends MainModal {
     customBangsButton.textContent = 'Manage Custom Bangs';
     
     customBangsButton.addEventListener('click', () => {
-      this.customBangManager.show();
+      this.customBangManagerModal.show();
     });
     
     customBangsButtonContainer.appendChild(customBangsButton);

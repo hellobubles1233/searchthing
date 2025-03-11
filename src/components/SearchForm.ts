@@ -2,7 +2,7 @@ import { createElement } from "../utils/dom";
 import { SettingsModal } from "./SettingsModal";
 import { loadSettings, UserSettings, saveSettings } from "../utils/settings";
 import { getUrlParameters, performRedirect } from "../utils/redirect";
-import { CustomBangManager } from "./CustomBangManager";
+import { CustomBangModal } from "./CustomBangModal";
 import { bangWorker } from "../utils/workerUtils";
 import { SearchInputComponent } from "./SearchInputComponent";
 import { SearchInfoComponent, BangExample } from "./SearchInfoComponent";
@@ -12,7 +12,7 @@ import { SearchHeaderComponent } from "./SearchHeaderComponent";
 export class SearchForm {
   private container: HTMLDivElement;
   private settingsModal: SettingsModal;
-  private customBangManager: CustomBangManager;
+  private customBangManagerModal: CustomBangModal;
   private settings: UserSettings;
   private searchInput: SearchInputComponent;
   private searchInfo: SearchInfoComponent;
@@ -39,7 +39,7 @@ export class SearchForm {
     console.log("SearchForm constructor - Is Recursive:", isRecursive, "Query:", query);
     
     // Initialize custom bang manager
-    this.customBangManager = new CustomBangManager((newSettings) => {
+    this.customBangManagerModal = new CustomBangModal((newSettings) => {
       // Update local settings when custom bangs change
       this.settings = newSettings;
       
@@ -66,7 +66,7 @@ export class SearchForm {
     this.searchHeader = new SearchHeaderComponent({
       isRecursive,
       onCustomBangsClick: () => {
-        this.customBangManager.show();
+        this.customBangManagerModal.show();
       },
       onSettingsClick: () => {
         this.settingsModal.toggle();

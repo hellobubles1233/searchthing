@@ -69,9 +69,9 @@ export class BangFormModal extends BaseModal {
       style: 'opacity: 0;'
     });
     
-    // Create modal
+    // Create modal with max-height and overflow
     this.modal = createElement('div', {
-      className: 'bg-[#120821] border border-white/10 rounded-lg shadow-xl w-full max-w-md overflow-hidden transition-transform duration-300',
+      className: 'bg-[#120821] border border-white/10 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col transition-transform duration-300',
       style: 'transform: translateY(20px);'
     });
     
@@ -83,11 +83,11 @@ export class BangFormModal extends BaseModal {
     
     // Modal header
     const header = createElement('div', {
-      className: 'bg-gradient-to-r from-[#2a004d] to-[#1a0036] px-6 py-4 flex justify-between items-center'
+      className: 'bg-gradient-to-r from-[#2a004d] to-[#1a0036] px-6 py-3 flex justify-between items-center flex-shrink-0'
     });
     
     const title = createElement('h2', {
-      className: 'text-white text-xl font-bold'
+      className: 'text-white text-lg font-bold'
     }, [this.isEditMode ? 'Edit Custom Bang' : 'Add Custom Bang']);
     
     const closeButton = createElement('button', {
@@ -97,18 +97,23 @@ export class BangFormModal extends BaseModal {
     
     header.append(title, closeButton);
     
-    // Modal content (form)
+    // Modal content (form) with scrolling
+    const contentWrapper = createElement('div', {
+      className: 'overflow-y-auto flex-grow'
+    });
+    
     const content = createElement('div', {
-      className: 'px-6 py-4'
+      className: 'px-8 py-6'
     });
     
     // Create form
     const form = this.createBangForm();
     content.appendChild(form);
+    contentWrapper.appendChild(content);
     
     // Modal footer
     const footer = createElement('div', {
-      className: 'bg-black/30 px-6 py-4 flex justify-end gap-2'
+      className: 'bg-black/30 px-6 py-3 flex justify-end gap-2 flex-shrink-0'
     });
     
     const cancelButton = createElement('button', {
@@ -126,7 +131,7 @@ export class BangFormModal extends BaseModal {
     footer.append(cancelButton, saveButton);
     
     // Assemble modal
-    this.modal.append(header, this.errorMessage, content, footer);
+    this.modal.append(header, this.errorMessage, contentWrapper, footer);
     this.overlay.appendChild(this.modal);
     
     // Close when clicking overlay (not the modal itself)
@@ -145,7 +150,7 @@ export class BangFormModal extends BaseModal {
    */
   private createBangForm(): HTMLFormElement {
     const form = createElement('form', {
-      className: 'space-y-4'
+      className: 'space-y-5'
     }) as HTMLFormElement;
     
     // Prevent form submission
@@ -154,16 +159,21 @@ export class BangFormModal extends BaseModal {
       this.saveBang();
     });
     
+    // Create a three-column layout for the main fields with equal heights
+    const mainFieldsContainer = createElement('div', {
+      className: 'grid grid-cols-1 md:grid-cols-3 gap-5 mb-5'
+    });
+    
     // Bang trigger (shortcut)
     const triggerGroup = this.createFormGroup(
       'Trigger',
-      'This is what you type after the bang prefix (e.g., "g" for !g). Multiple triggers can be separated by commas (e.g., "g, google").',
+      'What you type after the bang prefix',
       true
     );
     
     this.triggerInput = createElement('input', {
       type: 'text',
-      className: 'w-full px-4 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
+      className: 'w-full px-3 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
       placeholder: 'e.g., g, google',
       autocomplete: 'off',
       spellcheck: 'false',
@@ -185,101 +195,115 @@ export class BangFormModal extends BaseModal {
       }
     });
     
-    triggerGroup.appendChild(this.triggerInput);
-    form.appendChild(triggerGroup);
+    // Add input to the last child of the group (inputContainer)
+    triggerGroup.lastChild?.appendChild(this.triggerInput);
     
     // Service name
     const serviceGroup = this.createFormGroup(
       'Service Name',
-      'The name of the service this bang searches (e.g., "Google Maps")',
+      'Name of the service',
       true
     );
     
     this.serviceInput = createElement('input', {
       type: 'text',
-      className: 'w-full px-4 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
+      className: 'w-full px-3 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
       placeholder: 'e.g., Google Maps',
       autocomplete: 'off',
       required: 'true'
     }) as HTMLInputElement;
     
-    serviceGroup.appendChild(this.serviceInput);
-    form.appendChild(serviceGroup);
+    // Add input to the last child of the group (inputContainer)
+    serviceGroup.lastChild?.appendChild(this.serviceInput);
     
     // Domain
     const domainGroup = this.createFormGroup(
       'Domain',
-      'The domain of the service (e.g., "maps.google.com")',
+      'Domain of the service',
       true
     );
     
     this.domainInput = createElement('input', {
       type: 'text',
-      className: 'w-full px-4 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
+      className: 'w-full px-3 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
       placeholder: 'e.g., maps.google.com',
       autocomplete: 'off',
       required: 'true'
     }) as HTMLInputElement;
     
-    domainGroup.appendChild(this.domainInput);
-    form.appendChild(domainGroup);
+    // Add input to the last child of the group (inputContainer)
+    domainGroup.lastChild?.appendChild(this.domainInput);
+    
+    // Add to the main fields container
+    mainFieldsContainer.append(triggerGroup, serviceGroup, domainGroup);
+    form.appendChild(mainFieldsContainer);
+    
+    // Create a two-column layout for category and subcategory
+    const categoryContainer = createElement('div', {
+      className: 'grid grid-cols-1 md:grid-cols-2 gap-5 mb-5'
+    });
     
     // Category (optional)
     const categoryGroup = this.createFormGroup(
       'Category',
-      'Optional category for the bang (e.g., "maps", "search")',
+      'Optional category for organization',
       false
     );
     
     this.categoryInput = createElement('input', {
       type: 'text',
-      className: 'w-full px-4 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
+      className: 'w-full px-3 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
       placeholder: 'e.g., maps',
       autocomplete: 'off'
     }) as HTMLInputElement;
     
-    categoryGroup.appendChild(this.categoryInput);
-    form.appendChild(categoryGroup);
+    // Add input to the last child of the group (inputContainer)
+    categoryGroup.lastChild?.appendChild(this.categoryInput);
     
     // Subcategory (optional)
     const subcategoryGroup = this.createFormGroup(
       'Subcategory',
-      'Optional subcategory for more specific classification',
+      'Optional subcategory for further classification',
       false
     );
     
     this.subcategoryInput = createElement('input', {
       type: 'text',
-      className: 'w-full px-4 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
+      className: 'w-full px-3 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
       placeholder: 'e.g., directions',
       autocomplete: 'off'
     }) as HTMLInputElement;
     
-    subcategoryGroup.appendChild(this.subcategoryInput);
-    form.appendChild(subcategoryGroup);
+    // Add input to the last child of the group (inputContainer)
+    subcategoryGroup.lastChild?.appendChild(this.subcategoryInput);
+    
+    // Add to the category container
+    categoryContainer.append(categoryGroup, subcategoryGroup);
+    form.appendChild(categoryContainer);
     
     // URL Pattern (with search term placeholder)
     const urlPatternGroup = this.createFormGroup(
       'URL Pattern',
-      'The URL pattern with {searchTerms} as placeholder for the query',
+      'URL with {searchTerms} as placeholder for the search query',
       true
     );
     
     this.urlPatternInput = createElement('input', {
       type: 'text',
-      className: 'w-full px-4 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white font-mono text-sm',
-      placeholder: 'e.g., https://maps.google.com/maps?q={searchTerms}',
+      className: 'w-full px-3 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white font-mono text-sm',
+      placeholder: 'https://maps.google.com/maps?q={searchTerms}',
       autocomplete: 'off',
       required: 'true'
     }) as HTMLInputElement;
     
-    urlPatternGroup.appendChild(this.urlPatternInput);
+    // Add input to the last child of the group (inputContainer)
+    urlPatternGroup.lastChild?.appendChild(this.urlPatternInput);
     form.appendChild(urlPatternGroup);
     
     // Help text about the URL pattern
     const helpText = createElement('div', {
       className: 'text-white/50 text-xs mt-2'
-    }, ['Use {searchTerms} as a placeholder for the search query. For example: https://example.com/search?q={searchTerms}']);
+    }, ['Use {searchTerms} as a placeholder for the search query. Example: https://example.com/search?q={searchTerms}']);
     
     form.appendChild(helpText);
     
@@ -295,7 +319,11 @@ export class BangFormModal extends BaseModal {
     isRequired: boolean
   ): HTMLDivElement {
     const group = createElement('div', {
-      className: 'mb-4'
+      className: 'flex flex-col h-full'
+    });
+    
+    const labelContainer = createElement('div', {
+      className: 'flex-shrink-0 min-h-[60px]'
     });
     
     const labelElement = createElement('label', {
@@ -313,11 +341,20 @@ export class BangFormModal extends BaseModal {
       labelElement.appendChild(requiredIndicator);
     }
     
+    labelContainer.appendChild(labelElement);
+    
     const descriptionElement = createElement('p', {
-      className: 'text-white/60 text-xs mb-2'
+      className: 'text-white/60 text-xs mb-2 h-[32px]'
     }, [description]);
     
-    group.append(labelElement, descriptionElement);
+    labelContainer.appendChild(descriptionElement);
+    
+    // Input container will be added by the caller
+    const inputContainer = createElement('div', {
+      className: 'flex-grow'
+    });
+    
+    group.append(labelContainer, inputContainer);
     
     return group;
   }

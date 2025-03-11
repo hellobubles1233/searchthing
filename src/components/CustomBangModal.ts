@@ -5,7 +5,10 @@ import { BangFormModal } from "./BangFormModal";
 import { clearBangFilterCache } from "../utils/bangUtils";
 import { MainModal, ModalFooterButton } from "./MainModal";
 
-export class CustomBangManager extends MainModal {
+/**
+ * Modal for managing custom bangs
+ */
+export class CustomBangModal extends MainModal {
   private settings: UserSettings;
   private bangList: HTMLDivElement | null = null;
   private onSettingsChange: (settings: UserSettings) => void;
