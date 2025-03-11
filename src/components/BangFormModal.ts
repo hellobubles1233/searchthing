@@ -1,17 +1,17 @@
 import { createElement } from "../utils/dom";
 import { BangItem } from "../types/BangItem";
-import { BaseModal } from "./BaseModal";
+import { MainModal } from "./MainModal";
 
 /**
- * Modal for adding or editing a bang form
+ * Modal for adding or editing a bang
  */
-export class BangFormModal extends BaseModal {
+export class BangFormModal extends MainModal {
   private onSave: (bang: BangItem | null, isEdit: boolean) => void;
   private isEditMode = false;
   private originalBang: BangItem | null = null;
   private errorMessage: HTMLDivElement | null = null;
   
-  // Form elements
+  // Form inputs
   private triggerInput: HTMLInputElement | null = null;
   private serviceInput: HTMLInputElement | null = null;
   private domainInput: HTMLInputElement | null = null;
@@ -20,129 +20,99 @@ export class BangFormModal extends BaseModal {
   private urlPatternInput: HTMLInputElement | null = null;
   
   constructor(onSave: (bang: BangItem | null, isEdit: boolean) => void) {
-    super();
+    super({
+      title: 'Add Custom Bang',
+      maxWidth: '2xl',
+      showCloseButton: true,
+      zIndex: 70
+    });
+    
     this.onSave = onSave;
   }
   
   /**
-   * Shows the editor for creating or editing a bang
-   * @param bang Optional bang for edit mode
+   * Shows the modal, optionally in edit mode with a bang to edit
    */
   public show(bang?: BangItem): void {
     this.isEditMode = !!bang;
     this.originalBang = bang || null;
     
-    // Call parent show method to create the modal structure
+    // Update title based on mode
+    if (this.headerElement) {
+      const titleElement = this.headerElement.querySelector('h2');
+      if (titleElement) {
+        titleElement.textContent = this.isEditMode ? 'Edit Custom Bang' : 'Add Custom Bang';
+      }
+    }
+    
+    // Call parent show method
     super.show();
     
-    // Populate form fields if editing
-    if (bang) {
+    // Populate form fields if in edit mode
+    if (bang && this.contentElement) {
       this.populateFormFields(bang);
     }
   }
   
   /**
-   * Hides and removes the editor modal
+   * Hides the modal and resets form
    */
   public hide(): void {
-    // Call parent hide method
     super.hide();
+    this.hideError();
     
-    // Give time for animation, then clean up
+    // Reset form after animation completes
     setTimeout(() => {
-      // Remove ESC key handler
-      document.removeEventListener('keydown', this.handleEscKey);
-      
-      if (this.overlay && document.body.contains(this.overlay)) {
-        document.body.removeChild(this.overlay);
+      if (this.contentElement) {
+        // Find and reset the form
+        const form = this.contentElement.querySelector('form');
+        if (form) {
+          form.reset();
+        }
       }
     }, 300);
   }
   
   /**
-   * Creates the modal elements as required by BaseModal
+   * Creates the modal content
    */
   protected createModal(): void {
-    // Create overlay
-    this.overlay = createElement('div', {
-      className: 'fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center transition-opacity duration-300',
-      style: 'opacity: 0;'
-    });
+    // Call parent method to create the basic modal structure
+    super.createModal();
     
-    // Create modal with max-height and overflow
-    this.modal = createElement('div', {
-      className: 'bg-[#120821] border border-white/10 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col transition-transform duration-300',
-      style: 'transform: translateY(20px);'
-    });
+    // Create form
+    const form = this.createBangForm();
     
     // Create error message container (initially hidden)
     this.errorMessage = createElement('div', {
-      className: 'hidden bg-red-500/20 border border-red-500/40 text-white px-4 py-3 mb-4 rounded',
-      style: 'margin: 0 1rem; display: none;'
+      className: 'bg-red-500/20 border border-red-500/40 text-white px-4 py-3 mb-4 rounded',
+      style: 'display: none;'
     });
     
-    // Modal header
-    const header = createElement('div', {
-      className: 'bg-gradient-to-r from-[#2a004d] to-[#1a0036] px-6 py-3 flex justify-between items-center flex-shrink-0'
-    });
-    
-    const title = createElement('h2', {
-      className: 'text-white text-lg font-bold'
-    }, [this.isEditMode ? 'Edit Custom Bang' : 'Add Custom Bang']);
-    
-    const closeButton = createElement('button', {
-      className: 'text-white/80 hover:text-white transition-colors'
-    }, ['×']);
-    closeButton.addEventListener('click', () => this.hide());
-    
-    header.append(title, closeButton);
-    
-    // Modal content (form) with scrolling
-    const contentWrapper = createElement('div', {
-      className: 'overflow-y-auto flex-grow'
-    });
-    
+    // Create content container
     const content = createElement('div', {
       className: 'px-8 py-6'
     });
     
-    // Create form
-    const form = this.createBangForm();
-    content.appendChild(form);
-    contentWrapper.appendChild(content);
+    // Add error message and form to content
+    content.append(this.errorMessage, form);
     
-    // Modal footer
-    const footer = createElement('div', {
-      className: 'bg-black/30 px-6 py-3 flex justify-end gap-2 flex-shrink-0'
-    });
+    // Set the content
+    this.setContent(content);
     
-    const cancelButton = createElement('button', {
-      className: 'bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded transition-colors',
-      type: 'button'
-    }, ['Cancel']);
-    cancelButton.addEventListener('click', () => this.hide());
-    
-    const saveButton = createElement('button', {
-      className: 'bg-[#3a86ff] hover:bg-[#2a76ef] text-white px-4 py-2 rounded transition-colors',
-      type: 'button'
-    }, [this.isEditMode ? 'Update' : 'Create']);
-    saveButton.addEventListener('click', () => this.saveBang());
-    
-    footer.append(cancelButton, saveButton);
-    
-    // Assemble modal
-    this.modal.append(header, this.errorMessage, contentWrapper, footer);
-    this.overlay.appendChild(this.modal);
-    
-    // Close when clicking overlay (not the modal itself)
-    this.overlay.addEventListener('click', (e: MouseEvent) => {
-      if (e.target === this.overlay) {
-        this.hide();
+    // Set footer buttons
+    this.setFooterButtons([
+      {
+        text: 'Cancel',
+        type: 'secondary',
+        onClick: () => this.hide()
+      },
+      {
+        text: this.isEditMode ? 'Save Changes' : 'Add Bang',
+        type: 'primary',
+        onClick: () => this.saveBang()
       }
-    });
-    
-    // Add ESC key handler
-    document.addEventListener('keydown', this.handleEscKey);
+    ]);
   }
   
   /**
@@ -313,7 +283,7 @@ export class BangFormModal extends BaseModal {
   /**
    * Creates a form group with label and description
    */
-  private createFormGroup(
+  protected createFormGroup(
     label: string,
     description: string,
     isRequired: boolean
@@ -336,20 +306,19 @@ export class BangFormModal extends BaseModal {
     
     if (isRequired) {
       const requiredIndicator = createElement('span', {
-        className: 'text-[#ff3a3a] ml-1'
+        className: 'text-red-500 ml-1'
       }, ['*']);
       labelElement.appendChild(requiredIndicator);
     }
     
-    labelContainer.appendChild(labelElement);
-    
+    // Description
     const descriptionElement = createElement('p', {
-      className: 'text-white/60 text-xs mb-2 h-[32px]'
+      className: 'text-white/50 text-xs'
     }, [description]);
     
-    labelContainer.appendChild(descriptionElement);
+    labelContainer.append(labelElement, descriptionElement);
     
-    // Input container will be added by the caller
+    // Input container
     const inputContainer = createElement('div', {
       className: 'flex-grow'
     });
@@ -417,20 +386,13 @@ export class BangFormModal extends BaseModal {
   }
   
   /**
-   * Shows an error message in the form instead of using an alert
+   * Shows an error message
    */
-  private showError(message: string, inputToFocus?: HTMLInputElement | null): void {
-    if (this.errorMessage) {
-      this.errorMessage.textContent = message;
-      this.errorMessage.style.display = 'block';
-      
-      // Auto-hide after 5 seconds
-      setTimeout(() => {
-        if (this.errorMessage) {
-          this.errorMessage.style.display = 'none';
-        }
-      }, 5000);
-    }
+  public showError(message: string, inputToFocus?: HTMLInputElement | null): void {
+    if (!this.errorMessage) return;
+    
+    this.errorMessage.textContent = message;
+    this.errorMessage.style.display = 'block';
     
     // Focus the input if provided
     if (inputToFocus) {
@@ -441,10 +403,11 @@ export class BangFormModal extends BaseModal {
   /**
    * Hides the error message
    */
-  private hideError(): void {
-    if (this.errorMessage) {
-      this.errorMessage.style.display = 'none';
-    }
+  public hideError(): void {
+    if (!this.errorMessage) return;
+    
+    this.errorMessage.textContent = '';
+    this.errorMessage.style.display = 'none';
   }
   
   /**
@@ -485,14 +448,5 @@ export class BangFormModal extends BaseModal {
     }
     
     return true;
-  }
-  
-  /**
-   * Handler for ESC key to close the modal
-   */
-  protected handleEscKey(e: KeyboardEvent): void {
-    if (e.key === 'Escape' && this.isVisible) {
-      this.hide();
-    }
   }
 } 
