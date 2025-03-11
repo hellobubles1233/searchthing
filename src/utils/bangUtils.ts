@@ -142,7 +142,7 @@ export function clearBangFilterCache(): void {
     console.warn('Failed to clear worker cache:', error);
   }
   
-  // Clear the trigger map cache
+  // Clear the trigger map cache - explicitly set to null to ensure complete recreation
   globalTriggerMap = null;
 }
 
@@ -410,7 +410,29 @@ export function filterAndSortBangs(
   });
   
   // Combine the category matches with the sorted trigger matches
-  const combinedBangs = [...categoryMatchBangs, ...sortedMatches];
+  // But ensure duplicates are removed by using a Set-based deduplication
+  // We use a Map for deduplication to preserve insertion order, which is important for ranking
+  const combinedMap = new Map();
+  
+  // Add category matches first (they have highest priority)
+  categoryMatchBangs.forEach(bang => {
+    // Use domain and service as a unique identifier
+    const key = `${bang.d}:${bang.s}`;
+    if (!combinedMap.has(key)) {
+      combinedMap.set(key, bang);
+    }
+  });
+  
+  // Then add sorted matches, but only if not already added by category
+  sortedMatches.forEach(bang => {
+    const key = `${bang.d}:${bang.s}`;
+    if (!combinedMap.has(key)) {
+      combinedMap.set(key, bang);
+    }
+  });
+  
+  // Convert back to array and limit to maxItems
+  const combinedBangs = Array.from(combinedMap.values());
   
   // Take the top results
   const results = combinedBangs.slice(0, maxItems);

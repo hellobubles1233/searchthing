@@ -199,6 +199,9 @@ export class BangDropdown implements DropdownRenderer {
       return;
     }
     
+    // Clear the cache to ensure fresh results 
+    clearBangFilterCache();
+    
     // Filter and sort the bangs based on the query
     const settings = loadSettings();
     const combinedBangs = getCombinedBangs(settings);
@@ -237,7 +240,21 @@ export class BangDropdown implements DropdownRenderer {
 
   private populate(): void {
     if (this.container) {
-      this.renderItems(this.filteredBangs, {
+      // Ensure there are no duplicates in filtered bangs before rendering
+      const uniqueKeys = new Set<string>();
+      const uniqueFilteredBangs: BangItem[] = [];
+      
+      // Secondary deduplication logic to ensure no duplicates are rendered
+      this.filteredBangs.forEach(bang => {
+        const key = `${bang.d}:${bang.s}`;
+        if (!uniqueKeys.has(key)) {
+          uniqueKeys.add(key);
+          uniqueFilteredBangs.push(bang);
+        }
+      });
+      
+      // Use the deduplicated array for rendering
+      this.renderItems(uniqueFilteredBangs, {
         onClick: (index: number) => {
           this.selectedIndex = index;
           this.selectCurrent();
