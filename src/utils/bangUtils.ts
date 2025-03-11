@@ -169,7 +169,21 @@ export function findDefaultBang(settings: UserSettings): BangItem | undefined {
   }
 
   // Otherwise fall back to Google
-  return findBang(FALLBACK_BANG);
+  const googleBang = findBang(FALLBACK_BANG);
+  
+  if (googleBang) {
+    return googleBang;
+  }
+  
+  // As a last resort, if Google bang isn't found, create a hardcoded fallback
+  // This should never happen, but provides an absolute fallback
+  return {
+    t: ["g"],
+    s: "Google",
+    d: "Google Search",
+    u: "https://www.google.com/search?q={{{s}}}",
+    r: 1000 // High relevance score
+  };
 }
 
 

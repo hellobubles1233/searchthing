@@ -11,7 +11,7 @@ export interface UserSettings {
 
 // Default settings values
 export const DEFAULT_SETTINGS: UserSettings = {
-  defaultBang: undefined,
+  defaultBang: "g",  // Default to Google if user hasn't specified a preference
   customBangs: [],
 };
 
