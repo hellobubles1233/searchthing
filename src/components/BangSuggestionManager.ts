@@ -3,7 +3,7 @@ import { BangDropdown } from "./BangDropdown";
 import { BangItem } from "../types/BangItem";
 import { UserSettings } from "../utils/settings";
 import { bangWorker } from "../utils/workerUtils";
-import { setKeyboardNavigationActive } from "../utils/dropdownUtils";
+import { setKeyboardNavigationActive, Navigate } from "../utils/dropdownUtils";
 
 export interface BangSuggestionOptions {
   onBangSelection: (bangText: string) => void;
@@ -136,11 +136,11 @@ export class BangSuggestionManager {
         switch (e.key) {
           case "ArrowDown":
             e.preventDefault();
-            this.bangDropdown.navigateDown();
+            Navigate(this.bangDropdown, 1);
             break;
           case "ArrowUp":
             e.preventDefault();
-            this.bangDropdown.navigateUp();
+            Navigate(this.bangDropdown, -1);
             break;
           case "Tab":
             if (this.filteredBangs.length > 0) {
