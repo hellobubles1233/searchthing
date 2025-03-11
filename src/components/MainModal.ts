@@ -96,7 +96,7 @@ export class MainModal extends BaseModal {
         
         if (this.config.showCloseButton) {
             const closeButton = createElement('button', {
-                className: 'text-white/80 hover:text-white transition-colors'
+                className: 'w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white text-xl font-medium transition-all'
             });
             closeButton.textContent = '×';
             closeButton.addEventListener('click', () => {
