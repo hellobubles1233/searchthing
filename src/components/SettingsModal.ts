@@ -216,11 +216,16 @@ export class SettingsModal extends MainModal {
       className: 'relative'
     });
     
-    // Create the input without the prefix
+    // Create the bang prefix element
+    const bangPrefix = createElement('span', {
+      className: 'absolute left-4 top-1/2 transform -translate-y-1/2 text-white font-bold select-none pointer-events-none z-10'
+    }, ['!']);
+    
+    // Create the input with padding for the prefix but without backdrop-blur on the input
     this.defaultBangInput = createElement('input', {
       type: 'text',
-      className: 'w-full px-4 py-3 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded-xl border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
-      placeholder: 'Type a bang trigger (e.g., "g" for Google) or search by name',
+      className: 'w-full pl-7 pr-4 py-3 bg-black/20 hover:bg-black/30 placeholder-white/50 rounded-xl border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
+      placeholder: 'Type a bang trigger (e.g., "g" for Google)',
       autocomplete: 'off',
       spellcheck: 'false'
     }) as HTMLInputElement;
@@ -263,7 +268,16 @@ export class SettingsModal extends MainModal {
     
     // Handle input events for search
     this.defaultBangInput.addEventListener('input', (e) => {
-      const query = (e.target as HTMLInputElement).value.toLowerCase().replace(/^!/, '') || '';
+      const rawValue = (e.target as HTMLInputElement).value;
+      const cleanValue = rawValue.replace(/[^a-zA-Z0-9]/g, '');
+      
+      // Update the input value if it's different (to handle removed characters)
+      if (rawValue !== cleanValue) {
+        this.defaultBangInput!.value = cleanValue;
+      }
+      
+      // Use the clean value directly for searching
+      const query = cleanValue;
       
       // Create dropdown if it doesn't exist
       if (!this.bangDropdown) {
@@ -355,20 +369,18 @@ export class SettingsModal extends MainModal {
     // Set the initial value
     if (this.settings.defaultBang) {
       const bangText = this.settings.defaultBang;
+      const cleanBangText = bangText.replace(/[^a-zA-Z0-9]/g, '');
       const combinedBangs = getCombinedBangs(this.settings);
       
       const matchingBang = combinedBangs.find(b => 
-        (Array.isArray(b.t) ? b.t.includes(bangText) : b.t === bangText)
+        (Array.isArray(b.t) ? b.t.includes(cleanBangText) : b.t === cleanBangText)
       );
       
-      if (matchingBang) {
-        this.defaultBangInput.value = `${bangText} - ${matchingBang.s}`;
-      } else {
-        this.defaultBangInput.value = bangText;
-      }
+      // Set the clean text without prefix
+      this.defaultBangInput.value = cleanBangText;
     }
     
-    inputContainer.append(this.defaultBangInput, clearButton);
+    inputContainer.append(bangPrefix, this.defaultBangInput, clearButton);
     
     // Assemble the section
     formGroup.append(
@@ -391,17 +403,20 @@ export class SettingsModal extends MainModal {
     // Find the selected bang
     const combinedBangs = getCombinedBangs(this.settings);
     
+    // Clean the bangText to only allow alphanumeric characters
+    const cleanBangText = bangText.replace(/[^a-zA-Z0-9]/g, '');
+    
     // The bangText is the trigger
     const selectedBang = combinedBangs.find(b => 
-      (Array.isArray(b.t) ? b.t.includes(bangText) : b.t === bangText)
+      (Array.isArray(b.t) ? b.t.includes(cleanBangText) : b.t === cleanBangText)
     );
     
     if (selectedBang) {
       this.selectedBangItem = selectedBang;
-      this.settings.defaultBang = bangText;
+      this.settings.defaultBang = cleanBangText;
       
-      // Format the input value
-      this.defaultBangInput.value = `${bangText} - ${selectedBang.s}`;
+      // Use clean text without prefix
+      this.defaultBangInput.value = cleanBangText;
       
       // Update the display label 
       const bangService = document.getElementById('current-bang-service');
@@ -410,10 +425,10 @@ export class SettingsModal extends MainModal {
       }
       
       // Save the setting
-      updateSetting('defaultBang', bangText);
+      updateSetting('defaultBang', cleanBangText);
       this.onSettingsChange(this.settings);
     } else {
-      this.defaultBangInput.value = bangText;
+      this.defaultBangInput.value = cleanBangText;
     }
     
     // Hide and dispose the dropdown
