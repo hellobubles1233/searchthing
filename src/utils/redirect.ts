@@ -130,7 +130,9 @@ export class BangRedirector {
       const match = query.match(/!(\S+)/i);
 
       //Either the bang from the query, the default bang, or the fallback bang if all else fails.
-      const bangCandidate = match?.[1]?.toLowerCase() ?? this.defaultBang?.t[0] ?? FALLBACK_BANG;
+      const bangCandidate = match?.[1]?.toLowerCase() ?? 
+        (Array.isArray(this.defaultBang?.t) ? this.defaultBang?.t[0] : this.defaultBang?.t) ?? 
+        FALLBACK_BANG;
       
       // Find bang by checking if the bangCandidate matches any trigger. If not, use the default bang.
       const selectedBang = findBang(bangCandidate) ?? this.defaultBang;
