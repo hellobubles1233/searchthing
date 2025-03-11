@@ -1,6 +1,6 @@
 import { bangs } from "../bang";
 import { loadSettings, UserSettings } from "./settings";
-import { getCombinedBangs, findDefaultBang, findBang, FALLBACK_BANG } from "./bangUtils";
+import { getCombinedBangs, findDefaultBang, findBang, FALLBACK_BANG, getBaseDomain } from "./bangUtils";
 import { showRedirectLoadingScreen } from "../components/RedirectLoadingScreen";
 import queryString from "query-string";
 import { BangItem } from "../types/BangItem";
@@ -38,7 +38,10 @@ export class BangRedirector {
     } catch (error) {
       console.error("Failed to initialize BangRedirector:", error);
       // Set fallbacks if initialization fails
-      this.settings = { customBangs: [] };
+      this.settings = { 
+        customBangs: [],
+        redirectToHomepageOnEmptyQuery: true 
+      };
       this.combinedBangs = [...bangs]; // Use just the pre-defined bangs as fallback
       this.defaultBang = findBang("g");
     }
@@ -149,6 +152,18 @@ export class BangRedirector {
 
       // Remove the first bang from the query
       const cleanQuery = query.replace(/!\S+\s*/i, "").trim();
+
+      // If query is empty and redirectToHomepageOnEmptyQuery is enabled, redirect to the base domain
+      if (cleanQuery === "" && this.settings.redirectToHomepageOnEmptyQuery) {
+        const baseDomain = getBaseDomain(selectedBang.u);
+        if (baseDomain) {
+          return { 
+            success: true, 
+            url: baseDomain,
+            bangUsed: bangName
+          };
+        }
+      }
 
       // Format the search URL, replacing template parameters
       const searchUrl = selectedBang.u.replace(

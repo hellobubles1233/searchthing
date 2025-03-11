@@ -4,6 +4,22 @@ import { bangs as defaultBangs } from "../bang";
 import { bangWorker } from "./workerUtils";
 
 /**
+ * Extracts the base domain from a URL pattern
+ * e.g., "https://github.com/search?q=%s" -> "https://github.com"
+ * @param urlPattern The URL pattern to extract the base domain from
+ * @returns The base domain of the URL
+ */
+export function getBaseDomain(urlPattern: string): string {
+  try {
+    const url = new URL(urlPattern);
+    return `${url.protocol}//${url.hostname}`;
+  } catch (error) {
+    console.error("Failed to parse URL:", urlPattern);
+    return urlPattern;
+  }
+}
+
+/**
  * Simple LRU cache for storing bang filter results
  * This helps reduce repeated expensive filtering operations
  */
