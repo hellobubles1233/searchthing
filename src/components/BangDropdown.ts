@@ -6,7 +6,7 @@ import {
   applyStyles 
 } from "../utils/dom";
 import { bangs } from "../bang";
-import { filterAndSortBangs, getCombinedBangs } from "../utils/bangUtils";
+import { clearBangFilterCache, filterAndSortBangs, getCombinedBangs } from "../utils/bangUtils";
 import { BangItem } from "../types/BangItem";
 import { loadSettings } from "../utils/settings";
 import { 
