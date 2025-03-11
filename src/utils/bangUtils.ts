@@ -67,12 +67,19 @@ export function getCombinedBangs(settings: UserSettings): BangItem[] {
 
   // Create a map of custom bangs by trigger for quick lookup
   const customBangMap = new Map<string, BangItem>();
+  
+  // Also create a Set to track unique custom bangs (by reference)
+  const uniqueCustomBangs = new Set<BangItem>();
+  
   settings.customBangs.forEach((bang: BangItem) => {
     // Handle both string and array of triggers
     const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
     triggers.forEach((trigger: string) => {
       customBangMap.set(trigger, bang);
     });
+    
+    // Add to our set of unique custom bangs
+    uniqueCustomBangs.add(bang);
   });
 
   // Filter out default bangs that have been overridden by custom bangs
@@ -83,8 +90,8 @@ export function getCombinedBangs(settings: UserSettings): BangItem[] {
     return !triggers.some(trigger => customBangMap.has(trigger));
   });
 
-  // Combine the filtered default bangs with custom bangs
-  return [...filteredDefaultBangs, ...settings.customBangs];
+  // Combine the filtered default bangs with unique custom bangs
+  return [...filteredDefaultBangs, ...Array.from(uniqueCustomBangs)];
 }
 
 export function findBang(bang: string): BangItem | undefined {
