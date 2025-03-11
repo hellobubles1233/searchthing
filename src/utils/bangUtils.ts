@@ -70,31 +70,13 @@ export function getCombinedBangs(settings: UserSettings): BangItem[] {
   // Create a map of custom bangs by trigger for quick lookup
   const customBangMap = new Map<string, BangItem>();
   
-  // Also create a Set to track unique custom bangs (by reference)
-  const uniqueCustomBangs = new Set<BangItem>();
-  
-  // Create a map of custom bangs by domain and service for absolute deduplication
-  const customUniqueMap = new Map<string, BangItem>();
-  
+  // Track custom bangs by their triggers
   settings.customBangs.forEach((bang: BangItem) => {
-    // First, ensure this exact combo doesn't already exist
-    const uniqueKey = `${bang.s}:${bang.d}`;
-    console.log(`getCombinedBangs: Processing custom bang ${uniqueKey} with trigger ${Array.isArray(bang.t) ? bang.t.join(',') : bang.t}`);
-    
-    if (!customUniqueMap.has(uniqueKey)) {
-      customUniqueMap.set(uniqueKey, bang);
-      
-      // Handle both string and array of triggers
-      const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
-      triggers.forEach((trigger: string) => {
-        customBangMap.set(trigger, bang);
-      });
-      
-      // Add to our set of unique custom bangs
-      uniqueCustomBangs.add(bang);
-    } else {
-      console.warn(`Duplicate custom bang found! ${uniqueKey} - This will be skipped`);
-    }
+    // Handle both string and array of triggers
+    const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
+    triggers.forEach((trigger: string) => {
+      customBangMap.set(trigger, bang);
+    });
   });
 
   // Filter out default bangs that have been overridden by custom bangs
@@ -107,37 +89,8 @@ export function getCombinedBangs(settings: UserSettings): BangItem[] {
 
   console.log(`getCombinedBangs: Filtered down to ${filteredDefaultBangs.length} default bangs after removing overrides`);
 
-  // Convert the Map to array 
-  const uniqueCustomBangsArray = Array.from(customUniqueMap.values());
-  
-  console.log(`getCombinedBangs: Adding ${uniqueCustomBangsArray.length} unique custom bangs`);
-  
-  // Extra verification check to make sure we don't have duplicates
-  const finalUnique = new Map<string, BangItem>();
-  const result: BangItem[] = [];
-  
-  // First add filtered default bangs
-  for (const bang of filteredDefaultBangs) {
-    const key = `${bang.d}:${bang.s}`;
-    if (!finalUnique.has(key)) {
-      finalUnique.set(key, bang);
-      result.push(bang);
-    }
-  }
-  
-  // Then add custom bangs
-  for (const bang of uniqueCustomBangsArray) {
-    const key = `${bang.d}:${bang.s}`;
-    if (!finalUnique.has(key)) {
-      finalUnique.set(key, bang);
-      result.push(bang);
-    }
-  }
-  
-  console.log(`getCombinedBangs: Final combined bangs count: ${result.length}`);
-  
-  // Combine the filtered default bangs with unique custom bangs
-  return result;
+  // Combine the filtered default bangs with custom bangs
+  return [...filteredDefaultBangs, ...settings.customBangs];
 }
 
 export function findBang(bang: string): BangItem | undefined {
