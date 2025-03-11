@@ -183,9 +183,7 @@ export class BangDropdown implements DropdownRenderer {
       showMessage(this.container, "Start typing to search for bangs...");
       return;
     }
-    
-    // Force clear the cache EVERY time to be absolutely sure we're getting fresh results
-    console.log("BangDropdown: Clearing filter cache...");
+
     try {
       clearBangFilterCache();
     } catch (e) {
@@ -229,49 +227,53 @@ export class BangDropdown implements DropdownRenderer {
   }
 
   private populate(): void {
-    if (this.container) {
-      // SUPER AGGRESSIVE DEDUPLICATION
-      // We'll use domain+service as the key, and also check for trigger equality
-      const seenKeys = new Set<string>();
-      const dedupedBangs: BangItem[] = [];
-      
-      for (const bang of this.filteredBangs) {
-        // Create composite key for domain and service
-        const key = `${bang.d}:${bang.s}`;
-        
-        // If we haven't seen this exact combo before, add it
-        if (!seenKeys.has(key)) {
-          seenKeys.add(key);
-          dedupedBangs.push(bang);
-        } else {
-          console.warn(`Dropping duplicate bang: ${key}`);
+    if (!this.container) return;
+
+    // SUPER AGGRESSIVE DEDUPLICATION
+    const dedupedBangs: BangItem[] = this.deduplicate(this.filteredBangs);
+    
+
+    // Use the deduplicated array for rendering
+    this.renderItems(dedupedBangs, {
+      onClick: (index: number) => {
+        this.selectedIndex = index;
+        this.selectCurrent();
+      },
+      onHover: (index: number) => {
+        const bangItem = getElementAtIndex(this.container, '.cursor-pointer', index);
+        if (bangItem) {
+          HandleHovers(this, index, bangItem);
+        }
+      },
+      onLeave: (index: number) => {
+        const bangItem = getElementAtIndex(this.container, '.cursor-pointer', index);
+        if (bangItem) {
+          HandleMouseLeave(this, bangItem);
         }
       }
-      
-      console.log(`Original bangs: ${this.filteredBangs.length}, After dedup: ${dedupedBangs.length}`);
-      
-      // Use the deduplicated array for rendering
-      this.renderItems(dedupedBangs, {
-        onClick: (index: number) => {
-          this.selectedIndex = index;
-          this.selectCurrent();
-        },
-        onHover: (index: number) => {
-          const bangItem = getElementAtIndex(this.container, '.cursor-pointer', index);
-          if (bangItem) {
-            HandleHovers(this, index, bangItem);
-          }
-        },
-        onLeave: (index: number) => {
-          const bangItem = getElementAtIndex(this.container, '.cursor-pointer', index);
-          if (bangItem) {
-            HandleMouseLeave(this, bangItem);
-          }
-        }
-      });
-    }
+    });
   }
   
+  private deduplicate(bangs: BangItem[]) {
+    const seenKeys = new Set<string>();
+    const dedupedBangs: BangItem[] = [];
+
+    for (const bang of bangs) {
+      // Create composite key for domain and service
+      const key = `${bang.d}:${bang.s}`;
+
+      // If we haven't seen this exact combo before, add it
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        dedupedBangs.push(bang);
+      } else {
+        console.warn(`Dropping duplicate bang: ${key}`);
+      }
+    }
+
+    return dedupedBangs;
+  }
+
   public hide(): void {
     if (this.container) {
       // Force remove from DOM completely instead of just hiding
