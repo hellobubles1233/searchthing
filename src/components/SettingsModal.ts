@@ -33,13 +33,70 @@ export class SettingsModal extends MainModal {
       }
     });
     
-    this.settings = loadSettings();
     this.onSettingsChange = onSettingsChange;
     
-    // Add explicit save to ensure settings are persisted properly
-    saveSettings(this.settings);
+    try {
+      // Load settings with error handling
+      this.settings = loadSettings();
+      
+      // Add explicit save to ensure settings are persisted properly
+      this.saveSettingsSafely();
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+      // Fallback to default settings
+      this.settings = this.getDefaultSettings();
+      // Try to save the default settings
+      this.saveSettingsSafely();
+    }
     
     this.customBangManagerModal = new CustomBangModal(this.handleCustomBangsChange);
+  }
+  
+  /**
+   * Get default settings as a fallback
+   */
+  private getDefaultSettings(): UserSettings {
+    return {
+      defaultBang: undefined,
+      customBangs: [],
+      redirectToHomepageOnEmptyQuery: false
+    };
+  }
+  
+  /**
+   * Safely save settings with error handling
+   */
+  private saveSettingsSafely(): void {
+    try {
+      saveSettings(this.settings);
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      // Show error notification to user
+      this.showErrorNotification('Failed to save settings. Your changes may not persist.');
+    }
+  }
+  
+  /**
+   * Display an error notification to the user
+   */
+  private showErrorNotification(message: string): void {
+    // Create a simple error notification
+    const notification = createElement('div', {
+      className: 'fixed bottom-4 right-4 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg z-50 animate-fade-in'
+    });
+    
+    notification.textContent = message;
+    
+    // Add to DOM
+    document.body.appendChild(notification);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+      notification.classList.add('animate-fade-out');
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 5000);
   }
   
   /**
@@ -48,6 +105,9 @@ export class SettingsModal extends MainModal {
   private handleCustomBangsChange = (updatedSettings: UserSettings): void => {
     this.settings = updatedSettings;
     this.onSettingsChange(this.settings);
+    
+    // Try to save the updated settings
+    this.saveSettingsSafely();
     
     // If the bang dropdown is open, refresh it with the new combined bangs
     if (this.bangDropdown && this.defaultBangInput) {
