@@ -105,7 +105,7 @@ export class SearchHeaderComponent {
   }
   
   public updateHeading(isRecursive: boolean): void {
-    this.heading.textContent = isRecursive ? 'Processing recursive search...' : 'Search with !Bangs';
+    this.heading.textContent = isRecursive ? 'You found an easter egg!' : 'Search with !Bangs';
   }
   
   public setCustomBangsButtonEnabled(enabled: boolean): void {

@@ -189,15 +189,15 @@ export function HandleHovers(dropdown: DropdownRenderer, index: number, bangItem
 }
 
 // Build a bang item element
-export function buildBangItemElement(bang: BangItem) : HTMLDivElement {
-    const item = createElement('div', 
+export function buildElementFromItem(item: BangItem) : HTMLDivElement {
+    const element = createElement('div', 
       {
         className: 'p-2 cursor-pointer hover:bg-black/30 transition-colors rounded'
       }
     );
       
     // Store the original bang object
-    const originalBang = bang;
+    const originalBang = item;
     
     // Get the original trigger array if available in the bang's __originalBang property
     // This is needed to display aliases
@@ -216,7 +216,7 @@ export function buildBangItemElement(bang: BangItem) : HTMLDivElement {
     });
     
     // In our filtered results, t should now be a string
-    const triggerText = String(bang.t);
+    const triggerText = String(item.t);
     
     const shortcut = createElement('span', {
       className: 'font-mono text-[#3a86ff] font-bold'
@@ -224,7 +224,7 @@ export function buildBangItemElement(bang: BangItem) : HTMLDivElement {
     
     const service = createElement('span', {
       className: 'text-white font-medium'
-    }, [bang.s]);
+    }, [item.s]);
     
     titleRow.append(shortcut, service);
     
@@ -235,16 +235,16 @@ export function buildBangItemElement(bang: BangItem) : HTMLDivElement {
     
     const website = createElement('span', {
       className: 'text-white/60'
-    }, [bang.d]);
+    }, [item.d]);
     
     const category = createElement('span', {
       className: 'text-white/40 text-xs px-2 py-0.5 bg-[#3a86ff]/10 rounded-full'
-    }, [`${bang.c}${bang.sc !== bang.c ? ` · ${bang.sc}` : ''}`]);
+    }, [`${item.c}${item.sc !== item.c ? ` · ${item.sc}` : ''}`]);
     
     detailRow.append(website, category);
     
     // Always append the first two rows
-    item.append(titleRow, detailRow);
+    element.append(titleRow, detailRow);
     
     // If there are multiple triggers in the original bang, show them as aliases
     if (originalTriggers.length > 1) {
@@ -265,11 +265,11 @@ export function buildBangItemElement(bang: BangItem) : HTMLDivElement {
         }, [otherTriggers.map(t => `!${t}`).join(', ')]);
         
         aliasesRow.append(aliasesLabel, aliasesList);
-        item.append(aliasesRow);
+        element.append(aliasesRow);
       }
     }
     
-    return item;
+    return element;
   }
 
   

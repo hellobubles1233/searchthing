@@ -12,31 +12,75 @@ export class App {
   constructor() {
     // Create main container with Tailwind classes - using a more modern gradient
     this.container = createElement('div', {
-      className: 'flex flex-col items-center justify-center min-h-screen px-4 py-8 bg-[radial-gradient(ellipse_at_top,#2a004d,#000)]'
+      className: 'flex flex-col items-center justify-center min-h-screen px-4 py-8 bg-[radial-gradient(ellipse_at_top,#3a0066,#000)] brightness-115'
     });
     
     // Create content container with Tailwind classes - improved glass morphism effect
     const contentContainer = createElement('div', {
-      className: 'w-full max-w-6xl text-center p-6 md:p-10 bg-black/20 backdrop-blur-xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.25)] border border-white/5'
+      className: 'w-full max-w-6xl text-center p-6 md:p-10 bg-black/15 backdrop-blur-xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.25)] border border-white/10'
     });
     
     // Create logo container - larger size for the logo
     const logoContainer = createElement('div', {
-      className: 'w-32 h-32 mx-auto mb-6 flex items-center justify-center'
+      className: 'w-32 h-32 mx-auto mb-6 flex items-center justify-center relative transition-transform duration-300'
     });
     
-    // Add the new ReBangLogo image
+    // Add the base ReBangLogo image
     const logoImg = createElement('img', {
       src: '/ReBangLogo.png',
       alt: 'ReBang Logo',
       className: 'w-full h-full object-contain drop-shadow-[0_0_15px_rgba(0,0,0,0.6)]'
     });
     
+    // Add the top logo with hue-shift animation on hover
+    const logoTopImg = createElement('img', {
+      src: '/ReBangLogoTopOnly.png',
+      alt: 'ReBang Logo Top',
+      className: 'w-full h-full object-contain absolute top-0 left-0 z-10'
+    });
+    
+    // Add the hue-shift animation to the document
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes hue-shift {
+        0% { filter: hue-rotate(0deg); }
+        50% { filter: hue-rotate(-90deg); }
+        100% { filter: hue-rotate(0deg); }
+      }
+      
+      .animate-hue-shift {
+        animation: hue-shift 3s infinite ease-in-out;
+        mix-blend-mode: normal;
+        pointer-events: none;
+      }
+      
+      .logo-hover {
+        transform: rotate(5deg) scale(1.1);
+      }
+      
+      .brightness-115 {
+        filter: brightness(1.15);
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Add event listeners for hover
+    logoContainer.addEventListener('mouseenter', () => {
+      logoTopImg.classList.add('animate-hue-shift');
+      logoContainer.classList.add('logo-hover');
+    });
+    
+    logoContainer.addEventListener('mouseleave', () => {
+      logoTopImg.classList.remove('animate-hue-shift');
+      logoContainer.classList.remove('logo-hover');
+    });
+    
     logoContainer.appendChild(logoImg);
+    logoContainer.appendChild(logoTopImg);
     
     // Create header with Tailwind classes - JetBrains Mono font
     const header = createElement('h1', {
-      className: 'text-5xl md:text-6xl font-bold mb-8 py-4 bg-gradient-to-r from-[#3a86ff] via-[#8a2be2] to-[#ff006e] bg-clip-text text-transparent drop-shadow-sm font-["JetBrains_Mono",monospace] tracking-wider'
+      className: 'text-5xl md:text-6xl font-bold mb-8 py-4 bg-gradient-to-r from-[#1c269b] via-[#1c269b] to-[#1c269b] bg-clip-text text-transparent drop-shadow-sm font-["JetBrains_Mono",monospace] tracking-wider'
     }, ['!ReBang']);
     
     // Create search form early so we can position elements properly

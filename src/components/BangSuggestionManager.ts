@@ -3,7 +3,7 @@ import { BangDropdown } from "./BangDropdown";
 import { BangItem } from "../types/BangItem";
 import { UserSettings } from "../utils/settings";
 import { bangWorker } from "../utils/workerUtils";
-import { setKeyboardNavigationActive } from "../utils/dropdownUtils";
+import { setKeyboardNavigationActive, Navigate } from "../utils/dropdownUtils";
 
 export interface BangSuggestionOptions {
   onBangSelection: (bangText: string) => void;
@@ -132,45 +132,50 @@ export class BangSuggestionManager {
       if (isDropdownVisible) {
         // Activate keyboard navigation mode for all keyboard interactions
         setKeyboardNavigationActive(true);
-        
-        switch (e.key) {
-          case "ArrowDown":
-            e.preventDefault();
-            this.bangDropdown.navigateDown();
-            break;
-          case "ArrowUp":
-            e.preventDefault();
-            this.bangDropdown.navigateUp();
-            break;
-          case "Tab":
-            if (this.filteredBangs.length > 0) {
-              e.preventDefault();
-              
-              // If an item is selected, use that one, otherwise select the first item
-              if (this.bangDropdown.getSelectedIndex() >= 0) {
-                this.bangDropdown.selectCurrent();
-              } else {
-                this.bangDropdown.selectTopOption();
-              }
-            }
-            break;
-          case "Enter":
-            if (this.bangDropdown.getSelectedIndex() >= 0) {
-              // Only prevent default if an item is actively selected
-              e.preventDefault();
-              this.bangDropdown.selectCurrent();
-            }
-            // Otherwise, let the form submit naturally
-            break;
-          case "Escape":
-            e.preventDefault();
-            this.bangDropdown.hide();
-            break;
-        }
+        this.handleKeypress(e);
       }
     }, true); // Use capturing phase for highest priority
   }
   
+  private handleKeypress(e: KeyboardEvent) {
+    if (!this.bangDropdown) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        Navigate(this.bangDropdown, 1);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        Navigate(this.bangDropdown, -1);
+        break;
+      case "Tab":
+        if (this.filteredBangs.length > 0) {
+          e.preventDefault();
+
+          // If an item is selected, use that one, otherwise select the first item
+          if (this.bangDropdown.getSelectedIndex() >= 0) {
+            this.bangDropdown.selectCurrent();
+          } else {
+            this.bangDropdown.selectTopOption();
+          }
+        }
+        break;
+      case "Enter":
+        if (this.bangDropdown.getSelectedIndex() >= 0) {
+          // Only prevent default if an item is actively selected
+          e.preventDefault();
+          this.bangDropdown.selectCurrent();
+        }
+        // Otherwise, let the form submit naturally
+        break;
+      case "Escape":
+        e.preventDefault();
+        this.bangDropdown.hide();
+        break;
+    }
+  }
+
   private updateBangDropdown(bangQuery: string, hasDirectMatch = false): void {
     // Null check before using bangDropdown
     if (this.bangDropdown) {

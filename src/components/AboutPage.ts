@@ -1,4 +1,4 @@
-import { createElement, createLink } from "../utils/dom";
+import { createElement } from "../utils/dom";
 import { BaseModal } from "./BaseModal";
 
 export class AboutPage extends BaseModal {

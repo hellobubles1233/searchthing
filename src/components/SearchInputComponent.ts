@@ -34,9 +34,9 @@ export class SearchInputComponent {
     
     // Add the ReBang logo with shadow and no background
     const logoImg = createElement('img', {
-      src: '/ReBangLogo.png',
-      alt: 'Search',
-      style: 'transform: rotate(-60deg)',
+      src: '/ReBangLogoSillo.png',
+      alt: '',
+      style: '',
       className: 'w-8 h-8 filter drop-shadow-[0_2px_3px_rgba(0,0,0,0.7)]'
     });
     

@@ -26,8 +26,13 @@ export class SearchInfoComponent {
     // Create badges for each example
     this.examples.forEach(ex => {
       const badge = createElement('span', {
-        className: 'inline-flex items-center px-2 py-1 rounded-full bg-white/10 text-white/70 text-xs backdrop-blur-sm transition-all hover:bg-white/20 cursor-help'
+        className: 'inline-flex items-center px-2 py-1 rounded-full bg-white/10 text-white/70 text-xs backdrop-blur-sm transition-all hover:bg-white/20 cursor-pointer'
       }, [`${ex.name} (${ex.desc})`]);
+      
+      // Add click event to redirect to search with this bang and recursive=true
+      badge.addEventListener('click', () => {
+        window.location.href = `/?q=${encodeURIComponent(ex.name)}&recursive=true`;
+      });
       
       this.container.appendChild(badge);
     });
@@ -46,8 +51,13 @@ export class SearchInfoComponent {
     // Create badges for each example
     this.examples.forEach(ex => {
       const badge = createElement('span', {
-        className: 'inline-flex items-center px-2 py-1 rounded-full bg-white/10 text-white/70 text-xs backdrop-blur-sm transition-all hover:bg-white/20 cursor-help'
+        className: 'inline-flex items-center px-2 py-1 rounded-full bg-white/10 text-white/70 text-xs backdrop-blur-sm transition-all hover:bg-white/20 cursor-pointer'
       }, [`${ex.name} (${ex.desc})`]);
+      
+      // Add click event to redirect to search with this bang and recursive=true
+      badge.addEventListener('click', () => {
+        window.location.href = `/?q=${encodeURIComponent(ex.name)}&recursive=true`;
+      });
       
       this.container.appendChild(badge);
     });

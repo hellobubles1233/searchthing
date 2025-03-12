@@ -5,15 +5,13 @@ import {
   getElementAtIndex,
   applyStyles 
 } from "../utils/dom";
-import { bangs } from "../bang";
 import { filterAndSortBangs, getCombinedBangs, clearBangFilterCache } from "../utils/bangUtils";
 import { BangItem } from "../types/BangItem";
 import { loadSettings } from "../utils/settings";
 import { 
-  buildBangItemElement, 
+  buildElementFromItem, 
   HandleHovers, 
   HandleMouseLeave, 
-  Navigate,
   positionDropdown,
   applyDropdownStyle,
   toggleFooterInteractions,
@@ -122,15 +120,10 @@ export class BangDropdown implements DropdownRenderer {
   }
   
   private clear(): void {
-    if (this.container) {
+    if (this.container) 
       this.container.innerHTML = '';
-    }
-
-    // Reset selected index
     this.selectedIndex = -1;
   }
-  
-
   
   public renderItems(items: BangItem[], callbacks: {
     onClick: (index: number) => void;
@@ -139,26 +132,20 @@ export class BangDropdown implements DropdownRenderer {
   }): void {
     this.clear();
 
-    if (items.length === 0 && this.container) {
+    if (items.length === 0 && this.container){
       showMessage(this.container, "No matching bangs found");
-    } else 
-    {
-      // Create a container for the bang items
-      const resultsContainer = createElement('div', {
-        className: 'overflow-y-auto',
-        style: {
-          maxHeight: this.options.maxHeight
-        }
-      });
-
-      items.forEach((bang, index) => {
-        resultsContainer.appendChild(buildBangItemElement(bang));
-      });
-
-      if (this.container) {
-        this.container.appendChild(resultsContainer);
-      }
+      return;
     }
+
+    const itemContainer = createElement('div',{
+      className: 'overflow-y-auto',
+      style: {maxHeight: this.options.maxHeight}
+    });
+
+    items.forEach((item) => {itemContainer.appendChild(buildElementFromItem(item))});
+
+    this.container?.appendChild(itemContainer);
+  
     this.container?.querySelectorAll('.cursor-pointer').forEach((item, index) => {
       item.addEventListener('click', () => callbacks.onClick(index));
       item.addEventListener('mouseenter', () => callbacks.onHover(index));
@@ -167,10 +154,8 @@ export class BangDropdown implements DropdownRenderer {
   }
 
   public selectTopOption(): void {
-    if (this.filteredBangs.length > 0) {
-      const bang = this.filteredBangs[0];
-      this.selectBang(String(bang.t));
-    }
+    if (this.filteredBangs.length === 0) return; // No bangs found
+    this.selectBang(0);
   }
   
   /**
@@ -198,9 +183,7 @@ export class BangDropdown implements DropdownRenderer {
       showMessage(this.container, "Start typing to search for bangs...");
       return;
     }
-    
-    // Force clear the cache EVERY time to be absolutely sure we're getting fresh results
-    console.log("BangDropdown: Clearing filter cache...");
+
     try {
       clearBangFilterCache();
     } catch (e) {
@@ -208,30 +191,9 @@ export class BangDropdown implements DropdownRenderer {
     }
     
     // Filter and sort the bangs based on the query
-    console.log("BangDropdown: Loading settings and fetching bangs...");
     const settings = loadSettings();
     const combinedBangs = getCombinedBangs(settings);
-    console.log(`BangDropdown: Total combined bangs: ${combinedBangs.length}`);
-    
     this.filteredBangs = filterAndSortBangs(combinedBangs, query, this.options.maxItems);
-    console.log(`BangDropdown: Filtered bangs: ${this.filteredBangs.length}`);
-    
-    // Check for duplicates in the filtered bangs
-    const seenBangs = new Map<string, BangItem>();
-    const duplicates: string[] = [];
-    
-    this.filteredBangs.forEach(bang => {
-      const key = `${bang.d}:${bang.s}`;
-      if (seenBangs.has(key)) {
-        duplicates.push(key);
-      } else {
-        seenBangs.set(key, bang);
-      }
-    });
-    
-    if (duplicates.length > 0) {
-      console.warn(`BangDropdown: Found ${duplicates.length} duplicates before population:`, duplicates);
-    }
     
     // Populate the dropdown
     this.populate();
@@ -250,7 +212,7 @@ export class BangDropdown implements DropdownRenderer {
       toggleFooterInteractions(true);
     }
   }
-  
+
   /**
    * Directly sets the filtered bangs array
    * This allows external components (like workers) to pre-filter bangs
@@ -265,49 +227,53 @@ export class BangDropdown implements DropdownRenderer {
   }
 
   private populate(): void {
-    if (this.container) {
-      // SUPER AGGRESSIVE DEDUPLICATION
-      // We'll use domain+service as the key, and also check for trigger equality
-      const seenKeys = new Set<string>();
-      const dedupedBangs: BangItem[] = [];
-      
-      for (const bang of this.filteredBangs) {
-        // Create composite key for domain and service
-        const key = `${bang.d}:${bang.s}`;
-        
-        // If we haven't seen this exact combo before, add it
-        if (!seenKeys.has(key)) {
-          seenKeys.add(key);
-          dedupedBangs.push(bang);
-        } else {
-          console.warn(`Dropping duplicate bang: ${key}`);
+    if (!this.container) return;
+
+    // SUPER AGGRESSIVE DEDUPLICATION
+    const dedupedBangs: BangItem[] = this.deduplicate(this.filteredBangs);
+    
+
+    // Use the deduplicated array for rendering
+    this.renderItems(dedupedBangs, {
+      onClick: (index: number) => {
+        this.selectedIndex = index;
+        this.selectCurrent();
+      },
+      onHover: (index: number) => {
+        const bangItem = getElementAtIndex(this.container, '.cursor-pointer', index);
+        if (bangItem) {
+          HandleHovers(this, index, bangItem);
+        }
+      },
+      onLeave: (index: number) => {
+        const bangItem = getElementAtIndex(this.container, '.cursor-pointer', index);
+        if (bangItem) {
+          HandleMouseLeave(this, bangItem);
         }
       }
-      
-      console.log(`Original bangs: ${this.filteredBangs.length}, After dedup: ${dedupedBangs.length}`);
-      
-      // Use the deduplicated array for rendering
-      this.renderItems(dedupedBangs, {
-        onClick: (index: number) => {
-          this.selectedIndex = index;
-          this.selectCurrent();
-        },
-        onHover: (index: number) => {
-          const bangItem = getElementAtIndex(this.container, '.cursor-pointer', index);
-          if (bangItem) {
-            HandleHovers(this, index, bangItem);
-          }
-        },
-        onLeave: (index: number) => {
-          const bangItem = getElementAtIndex(this.container, '.cursor-pointer', index);
-          if (bangItem) {
-            HandleMouseLeave(this, bangItem);
-          }
-        }
-      });
-    }
+    });
   }
   
+  private deduplicate(bangs: BangItem[]) {
+    const seenKeys = new Set<string>();
+    const dedupedBangs: BangItem[] = [];
+
+    for (const bang of bangs) {
+      // Create composite key for domain and service
+      const key = `${bang.d}:${bang.s}`;
+
+      // If we haven't seen this exact combo before, add it
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        dedupedBangs.push(bang);
+      } else {
+        console.warn(`Dropping duplicate bang: ${key}`);
+      }
+    }
+
+    return dedupedBangs;
+  }
+
   public hide(): void {
     if (this.container) {
       // Force remove from DOM completely instead of just hiding
@@ -330,21 +296,10 @@ export class BangDropdown implements DropdownRenderer {
     }
   }
   
-  public navigateUp(): void {
-    setKeyboardNavigationActive(true);
-    Navigate(this, -1);
-  }
-  
-  public navigateDown(): void {
-    setKeyboardNavigationActive(true);
-    Navigate(this, 1);
-  }
-  
   public selectCurrent(): void {
     setKeyboardNavigationActive(true);
     if (this.selectedIndex >= 0 && this.selectedIndex < this.filteredBangs.length) {
-      const bang = this.filteredBangs[this.selectedIndex];
-      this.selectBang(String(bang.t));
+      this.selectBang(this.selectedIndex);
     } else {
       // Even if nothing is selected, hide the dropdown
       this.hide();
@@ -391,10 +346,10 @@ export class BangDropdown implements DropdownRenderer {
     }
   }
   
-  private selectBang(bangText: string): void {
-    if (this.options.onSelectBang) {
-      this.options.onSelectBang(bangText);
-    }
+
+  public selectBang(index: number): void {
+    if (this.options.onSelectBang) 
+      this.options.onSelectBang(String(this.filteredBangs[index].t));
     this.hide();
   }
   /**
