@@ -1,18 +1,16 @@
 import { createElement } from "../utils/dom";
-import { bangs } from "../bang";
 import { 
   loadSettings, 
   saveSettings, 
   updateSetting,
   UserSettings 
 } from "../utils/settings";
-import { filterAndSortBangs, getCombinedBangs, clearBangFilterCache } from "../utils/bangUtils";
 import { BangItem } from "../types/BangItem";
 import { BangDropdown } from "./BangDropdown";
 import { CustomBangModal } from "./CustomBangModal";
 import { setKeyboardNavigationActive } from '../utils/dropdownUtils';
 import { MainModal } from "./MainModal";
-
+import { getCombinedBangsFromSettings } from "../utils/bangSettingsUtil";
 export class SettingsModal extends MainModal {
   private settings: UserSettings;
   private onSettingsChange: (settings: UserSettings) => void;
@@ -91,7 +89,7 @@ export class SettingsModal extends MainModal {
     if (!this.defaultBangInput) return;
     
     const inputValue = this.defaultBangInput.value || '';
-    const combinedBangs = getCombinedBangs(this.settings);
+    const combinedBangs = getCombinedBangsFromSettings();
     
     // If the input is empty, just update the display but DON'T TOUCH THE INPUT FIELD
     if (!inputValue) {
@@ -192,7 +190,7 @@ export class SettingsModal extends MainModal {
     // Get the current default bang if set
     if (this.settings.defaultBang) {
       const bangText = this.settings.defaultBang;
-      const combinedBangs = getCombinedBangs(this.settings);
+      const combinedBangs = getCombinedBangsFromSettings();
       
       const matchingBang = combinedBangs.find(b => 
         (Array.isArray(b.t) ? b.t.includes(bangText) : b.t === bangText)
@@ -295,7 +293,7 @@ export class SettingsModal extends MainModal {
       // Try to match the current input and update in real-time
       const bangPart = query.split(/[ \-:;,]/)[0].trim();
       if (bangPart) {
-        const combinedBangs = getCombinedBangs(this.settings);
+        const combinedBangs = getCombinedBangsFromSettings();
         const directMatch = combinedBangs.find(b => 
           typeof b.t === 'string' 
             ? b.t.toLowerCase() === bangPart 
@@ -370,7 +368,7 @@ export class SettingsModal extends MainModal {
     if (this.settings.defaultBang) {
       const bangText = this.settings.defaultBang;
       const cleanBangText = bangText.replace(/[^a-zA-Z0-9]/g, '');
-      const combinedBangs = getCombinedBangs(this.settings);
+      const combinedBangs = getCombinedBangsFromSettings();
       
       const matchingBang = combinedBangs.find(b => 
         (Array.isArray(b.t) ? b.t.includes(cleanBangText) : b.t === cleanBangText)
@@ -401,7 +399,7 @@ export class SettingsModal extends MainModal {
     if (!this.defaultBangInput) return;
     
     // Find the selected bang
-    const combinedBangs = getCombinedBangs(this.settings);
+    const combinedBangs = getCombinedBangsFromSettings();
     
     // Clean the bangText to only allow alphanumeric characters
     const cleanBangText = bangText.replace(/[^a-zA-Z0-9]/g, '');

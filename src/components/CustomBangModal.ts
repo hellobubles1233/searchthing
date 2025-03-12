@@ -2,7 +2,7 @@ import { createElement } from "../utils/dom";
 import { BangItem } from "../types/BangItem";
 import { UserSettings, loadSettings, saveSettings } from "../utils/settings";
 import { BangFormModal } from "./BangFormModal";
-import { clearBangFilterCache } from "../utils/bangUtils";
+import { clearBangFilterCache } from "../utils/bangCoreUtil";
 import { MainModal, ModalFooterButton } from "./MainModal";
 
 /**

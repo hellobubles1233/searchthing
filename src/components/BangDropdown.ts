@@ -5,9 +5,10 @@ import {
   getElementAtIndex,
   applyStyles 
 } from "../utils/dom";
-import { filterAndSortBangs, getCombinedBangs, clearBangFilterCache } from "../utils/bangUtils";
+import { filterAndSortBangs } from "../utils/bangSearchUtil";
+import { getCombinedBangsFromSettings } from "../utils/bangSettingsUtil";
+import { clearBangFilterCache } from "../utils/bangCoreUtil";
 import { BangItem } from "../types/BangItem";
-import { loadSettings } from "../utils/settings";
 import { 
   buildElementFromItem, 
   HandleHovers, 
@@ -183,7 +184,7 @@ export class BangDropdown implements DropdownRenderer {
       showMessage(this.container, "Start typing to search for bangs...");
       return;
     }
-
+    
     try {
       clearBangFilterCache();
     } catch (e) {
@@ -191,9 +192,9 @@ export class BangDropdown implements DropdownRenderer {
     }
     
     // Filter and sort the bangs based on the query
-    const settings = loadSettings();
-    const combinedBangs = getCombinedBangs(settings);
-    this.filteredBangs = filterAndSortBangs(combinedBangs, query, this.options.maxItems);
+    const combinedBangs = getCombinedBangsFromSettings();
+
+    this.filteredBangs = filterAndSortBangs(combinedBangs, query, this.options.maxItems );
     
     // Populate the dropdown
     this.populate();

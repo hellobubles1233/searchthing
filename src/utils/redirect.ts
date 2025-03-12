@@ -1,9 +1,11 @@
 import { loadSettings } from "./settings";
-import { findDefaultBang, findBang, FALLBACK_BANG, getBaseDomain, getBangName } from "./bangUtils";
+
 import { showRedirectLoadingScreen } from "../components/RedirectLoadingScreen";
 import { BangItem } from "../types/BangItem";
-import { getParametersFromUrl, validateRedirectUrl } from "./urlUtils"; 
-import { determineBangCandidate, determineBangUsed } from "./bangUtils";
+import { getParametersFromUrl, validateRedirectUrl, getBaseDomain } from "./urlUtils"; 
+import { determineBangCandidate, determineBangUsed, getBangFirstTrigger } from "./bangCoreUtil";
+import { findDefaultBangFromSettings } from "./bangSettingsUtil";
+
 /**
  * Result object for bang redirect operations
  */
@@ -24,12 +26,12 @@ function getRedirect(urlParams: URLSearchParams): BangRedirectResult {
     const query = urlParams.get("q") || "";
     if (!query) return { success: false, error: "No query parameter found" };
 
-    const defaultBang = findDefaultBang(loadSettings());
+    const defaultBang = findDefaultBangFromSettings();
     const bangCandidate: string = determineBangCandidate(query, defaultBang);
     const selectedBang: BangItem = determineBangUsed(bangCandidate, defaultBang);
 
     // Get bang name for return value
-    const bangName = getBangName(selectedBang);
+    const bangName = getBangFirstTrigger(selectedBang);
 
     // Remove the first bang from the query
     const cleanQuery = query.replace(/!\S+\s*/i, "").trim();

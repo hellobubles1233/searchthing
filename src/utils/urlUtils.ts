@@ -14,6 +14,16 @@ export function validateRedirectUrl(url: string): boolean {
     }
   }
 
+export function getBaseDomain(urlPattern: string): string {
+  try {
+    const url = new URL(urlPattern);
+    return `${url.protocol}//${url.hostname}`;
+  } catch (error) {
+    console.error("Failed to parse URL:", urlPattern);
+    return urlPattern;
+  }
+}
+
 export function getParametersFromUrl(url: string): URLSearchParams {
         try {
           // Parse URL with query-string
