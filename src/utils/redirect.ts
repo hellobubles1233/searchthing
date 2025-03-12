@@ -3,7 +3,7 @@ import { findDefaultBang, findBang, FALLBACK_BANG, getBaseDomain, getBangName } 
 import { showRedirectLoadingScreen } from "../components/RedirectLoadingScreen";
 import { BangItem } from "../types/BangItem";
 import { getParametersFromUrl, validateRedirectUrl } from "./urlUtils"; 
-
+import { determineBangCandidate, determineBangUsed } from "./bangUtils";
 /**
  * Result object for bang redirect operations
  */
@@ -13,17 +13,6 @@ export type BangRedirectResult = {
   error?: string;
   bangUsed?: string;
 };
-
-function determineBangUsed(bangCandidate: string, defaultBang: BangItem): BangItem {
-  return findBang(bangCandidate) ?? defaultBang;
-}
-
-function determineBangCandidate(query: string, defaultBang: BangItem): string {
-  const match = query.match(/!(\S+)/i);
-  const matchBang = match?.[1]?.toLowerCase();
-  const trigger = Array.isArray(defaultBang?.t) ? defaultBang?.t[0] : defaultBang?.t
-  return matchBang ?? trigger ?? FALLBACK_BANG;
-}
 
 
 /**

@@ -472,3 +472,14 @@ function sortMatches(matches: BangItem[], query: string): BangItem[] {
     return String(a.t).localeCompare(String(b.t));
   });
 }
+
+export function determineBangUsed(bangCandidate: string, defaultBang: BangItem): BangItem {
+  return findBang(bangCandidate) ?? defaultBang;
+}
+
+export function determineBangCandidate(query: string, defaultBang: BangItem): string {
+  const match = query.match(/!(\S+)/i);
+  const matchBang = match?.[1]?.toLowerCase();
+  const trigger = Array.isArray(defaultBang?.t) ? defaultBang?.t[0] : defaultBang?.t
+  return matchBang ?? trigger ?? FALLBACK_BANG;
+}
