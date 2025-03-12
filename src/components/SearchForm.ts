@@ -111,13 +111,8 @@ export class SearchForm {
     });
     
     // Create and initialize the search info component
-    const examples: BangExample[] = [
-      { name: '!g', desc: 'Google' },
-      { name: '!yt', desc: 'YouTube' },
-      { name: '!w', desc: 'Wikipedia' },
-      { name: '!gh', desc: 'GitHub' }
-    ];
-    this.searchInfo = new SearchInfoComponent(examples);
+
+    this.searchInfo = new SearchInfoComponent();
     
     // Add components to search container
     this.container.append(
