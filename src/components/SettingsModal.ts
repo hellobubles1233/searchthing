@@ -188,10 +188,7 @@ export class SettingsModal extends MainModal {
         this.settings.defaultBang = trigger;
         
         // Update the display label only, NOT the input field
-        const currentBangService = document.querySelector('[id="current-bang-service"]');
-        if (currentBangService) {
-          currentBangService.textContent = 'Google (default)';
-        }
+        this.updateCurrentBangDisplay('Google (default)');
       }
       return;
     }
@@ -211,9 +208,25 @@ export class SettingsModal extends MainModal {
         this.settings.defaultBang = bangText;
         
         // Save the setting
-        updateSetting('defaultBang', bangText);
-        this.onSettingsChange(this.settings);
+        try {
+          updateSetting('defaultBang', bangText);
+          this.onSettingsChange(this.settings);
+        } catch (error) {
+          console.error('Failed to update default bang setting:', error);
+          this.showErrorNotification('Failed to save your default bang setting.');
+        }
       }
+    }
+  }
+  
+  /**
+   * Updates the current bang display element with the given text
+   * @param displayText The text to display
+   */
+  private updateCurrentBangDisplay(displayText: string): void {
+    const bangService = document.getElementById('current-bang-service');
+    if (bangService) {
+      bangService.textContent = displayText;
     }
   }
   
@@ -314,33 +327,6 @@ export class SettingsModal extends MainModal {
     });
     clearButton.textContent = '×';
     
-    clearButton.addEventListener('click', (e) => {
-      e.preventDefault(); // Prevent default button behavior
-      
-      if (this.defaultBangInput) {
-        // Clear input but don't replace with any text
-        this.defaultBangInput.value = '';
-        
-        // Don't focus the input to avoid blur handler
-        // this.defaultBangInput.focus();
-        
-        // Reset to default Google in the display ONLY, not in the input
-        const bangService = document.getElementById('current-bang-service');
-        if (bangService) {
-          bangService.textContent = 'Google (default)';
-        }
-        
-        // Clear default bang setting
-        this.settings.defaultBang = undefined;
-        this.onSettingsChange(this.settings);
-        
-        // Hide dropdown if visible
-        if (this.bangDropdown) {
-          this.bangDropdown.hide();
-        }
-      }
-    });
-    
     // Set up input event handlers
     this.setupBangInputHandlers(this.defaultBangInput, clearButton);
     
@@ -412,38 +398,7 @@ export class SettingsModal extends MainModal {
       this.bangDropdown.show(query);
       
       // Live update "Currently using" section when typing
-      // Try to match the current input and update in real-time
-      const bangPart = query.split(/[ \-:;,]/)[0].trim();
-      if (bangPart) {
-        const combinedBangs = getCombinedBangsFromSettings();
-        const directMatch = combinedBangs.find(b => 
-          typeof b.t === 'string' 
-            ? b.t.toLowerCase() === bangPart 
-            : b.t.some(t => t.toLowerCase() === bangPart)
-        );
-        
-        if (directMatch) {
-          // Update the currently using label with the matched service
-          const bangService = document.getElementById('current-bang-service');
-          if (bangService) {
-            bangService.textContent = directMatch.s;
-          }
-          
-          // Auto-save on direct match
-          this.settings.defaultBang = bangPart;
-          this.onSettingsChange(this.settings);
-        }
-      } else if (query === '') {
-        // Empty input - reset label to Google default
-        const bangService = document.getElementById('current-bang-service');
-        if (bangService) {
-          bangService.textContent = 'Google (default)';
-        }
-        
-        // Clear default bang setting
-        this.settings.defaultBang = undefined;
-        this.onSettingsChange(this.settings);
-      }
+      this.updateBangDisplayFromInput(query);
     });
     
     // Handle focus to show all bangs
@@ -500,6 +455,61 @@ export class SettingsModal extends MainModal {
       // Use the debounced cleanup function
       debouncedCleanup(e);
     });
+    
+    // Set up clear button
+    clearButton.addEventListener('click', (e) => {
+      e.preventDefault(); // Prevent default button behavior
+      
+      if (inputElement) {
+        // Clear input but don't replace with any text
+        inputElement.value = '';
+        
+        // Reset to default Google in the display ONLY, not in the input
+        this.updateCurrentBangDisplay('Google (default)');
+        
+        // Clear default bang setting
+        this.settings.defaultBang = undefined;
+        this.onSettingsChange(this.settings);
+        
+        // Hide dropdown if visible
+        if (this.bangDropdown) {
+          this.bangDropdown.hide();
+        }
+      }
+    });
+  }
+  
+  /**
+   * Updates the bang display based on the input query
+   * @param query The current input query
+   */
+  private updateBangDisplayFromInput(query: string): void {
+    // Try to match the current input and update in real-time
+    const bangPart = query.split(/[ \-:;,]/)[0].trim();
+    if (bangPart) {
+      const combinedBangs = getCombinedBangsFromSettings();
+      const directMatch = combinedBangs.find(b => 
+        typeof b.t === 'string' 
+          ? b.t.toLowerCase() === bangPart 
+          : b.t.some(t => t.toLowerCase() === bangPart)
+      );
+      
+      if (directMatch) {
+        // Update the currently using label with the matched service
+        this.updateCurrentBangDisplay(directMatch.s);
+        
+        // Auto-save on direct match
+        this.settings.defaultBang = bangPart;
+        this.onSettingsChange(this.settings);
+      }
+    } else if (query === '') {
+      // Empty input - reset label to Google default
+      this.updateCurrentBangDisplay('Google (default)');
+      
+      // Clear default bang setting
+      this.settings.defaultBang = undefined;
+      this.onSettingsChange(this.settings);
+    }
   }
   
   /**
@@ -526,10 +536,7 @@ export class SettingsModal extends MainModal {
       this.defaultBangInput.value = cleanBangText;
       
       // Update the display label 
-      const bangService = document.getElementById('current-bang-service');
-      if (bangService) {
-        bangService.textContent = selectedBang.s;
-      }
+      this.updateCurrentBangDisplay(selectedBang.s);
       
       // Save the setting
       try {
