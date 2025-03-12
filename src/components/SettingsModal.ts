@@ -257,14 +257,51 @@ export class SettingsModal extends MainModal {
       }
     });
     
+    // Set up input event handlers
+    this.setupBangInputHandlers(this.defaultBangInput, clearButton);
+    
+    // Set the initial value
+    if (this.settings.defaultBang) {
+      const bangText = this.settings.defaultBang;
+      const cleanBangText = bangText.replace(/[^a-zA-Z0-9]/g, '');
+      const combinedBangs = getCombinedBangsFromSettings();
+      
+      const matchingBang = combinedBangs.find(b => 
+        (Array.isArray(b.t) ? b.t.includes(cleanBangText) : b.t === cleanBangText)
+      );
+      
+      // Set the clean text without prefix
+      this.defaultBangInput.value = cleanBangText;
+    }
+    
+    inputContainer.append(bangPrefix, this.defaultBangInput, clearButton);
+    
+    // Assemble the section
+    formGroup.append(
+      customBangsButtonContainer,
+      currentBangContainer,
+      inputContainer
+    );
+    
+    section.appendChild(formGroup);
+    
+    return section;
+  }
+  
+  /**
+   * Sets up event handlers for the bang input field
+   * @param inputElement The input element to set up handlers for
+   * @param clearButton The clear button associated with the input
+   */
+  private setupBangInputHandlers(inputElement: HTMLInputElement, clearButton: HTMLButtonElement): void {
     // Handle input events for search
-    this.defaultBangInput.addEventListener('input', (e) => {
+    inputElement.addEventListener('input', (e) => {
       const rawValue = (e.target as HTMLInputElement).value;
       const cleanValue = rawValue.replace(/[^a-zA-Z0-9]/g, '');
       
       // Update the input value if it's different (to handle removed characters)
       if (rawValue !== cleanValue) {
-        this.defaultBangInput!.value = cleanValue;
+        inputElement.value = cleanValue;
       }
       
       // Use the clean value directly for searching
@@ -272,7 +309,7 @@ export class SettingsModal extends MainModal {
       
       // Create dropdown if it doesn't exist
       if (!this.bangDropdown) {
-        this.bangDropdown = new BangDropdown(this.defaultBangInput!, {
+        this.bangDropdown = new BangDropdown(inputElement, {
           onSelectBang: (bangText: string) => this.handleBangSelection(bangText),
           appendTo: document.body, // Append to body to avoid modal clipping
           positionStyle: 'fixed',  // Use fixed positioning
@@ -318,12 +355,12 @@ export class SettingsModal extends MainModal {
     });
     
     // Handle focus to show all bangs
-    this.defaultBangInput.addEventListener('focus', () => {
-      const query = this.defaultBangInput!.value.toLowerCase().replace(/^!/, '') || '';
+    inputElement.addEventListener('focus', () => {
+      const query = inputElement.value.toLowerCase().replace(/^!/, '') || '';
       
       // Create dropdown if it doesn't exist
       if (!this.bangDropdown) {
-        this.bangDropdown = new BangDropdown(this.defaultBangInput!, {
+        this.bangDropdown = new BangDropdown(inputElement, {
           onSelectBang: (bangText: string) => this.handleBangSelection(bangText),
           appendTo: document.body, // Append to body to avoid modal clipping
           positionStyle: 'fixed',  // Use fixed positioning
@@ -338,7 +375,7 @@ export class SettingsModal extends MainModal {
     });
     
     // Handle blur to hide dropdown
-    this.defaultBangInput.addEventListener('blur', (e) => {
+    inputElement.addEventListener('blur', (e) => {
       // Delay hiding to allow for selection
       setTimeout(() => {
         this.cleanupDropdown();
@@ -355,33 +392,6 @@ export class SettingsModal extends MainModal {
       // Disable keyboard navigation
       setKeyboardNavigationActive(false);
     });
-    
-    // Set the initial value
-    if (this.settings.defaultBang) {
-      const bangText = this.settings.defaultBang;
-      const cleanBangText = bangText.replace(/[^a-zA-Z0-9]/g, '');
-      const combinedBangs = getCombinedBangsFromSettings();
-      
-      const matchingBang = combinedBangs.find(b => 
-        (Array.isArray(b.t) ? b.t.includes(cleanBangText) : b.t === cleanBangText)
-      );
-      
-      // Set the clean text without prefix
-      this.defaultBangInput.value = cleanBangText;
-    }
-    
-    inputContainer.append(bangPrefix, this.defaultBangInput, clearButton);
-    
-    // Assemble the section
-    formGroup.append(
-      customBangsButtonContainer,
-      currentBangContainer,
-      inputContainer
-    );
-    
-    section.appendChild(formGroup);
-    
-    return section;
   }
   
   /**
