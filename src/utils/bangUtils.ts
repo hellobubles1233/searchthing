@@ -133,7 +133,7 @@ export function getBangName(bang: BangItem): string {
 
 export const FALLBACK_BANG = "g";
 
-export function findDefaultBang(settings: UserSettings): BangItem | undefined {
+export function findDefaultBang(settings: UserSettings): BangItem {
   // First try to find the user's preferred default bang
   var defaultBangString = settings.defaultBang;
   if (!defaultBangString) {
