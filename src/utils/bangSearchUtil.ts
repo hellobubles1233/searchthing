@@ -3,7 +3,43 @@
 import { BangItem } from "../types/BangItem";
 import { bangFilterCache } from "./bangCoreUtil";
 
-const MAX_FILTERED_ITEMS = 35;
+export const MAX_FILTERED_ITEMS = 35;
+
+/**
+ * Combines custom bangs with default bangs, ensuring custom bangs override defaults with the same triggers
+ * 
+ * @param defaultBangs Array of default bang items
+ * @param customBangs Array of custom bang items that should override defaults
+ * @returns Combined array with custom bangs taking precedence
+ */
+export function combineBangs(defaultBangs: BangItem[], customBangs: BangItem[] = []): BangItem[] {
+  if (!customBangs || customBangs.length === 0) {
+    return defaultBangs;
+  }
+
+  // Create a map of custom bangs by trigger for quick lookup
+  const customBangMap = new Map<string, BangItem>();
+  
+  // Track custom bangs by their triggers
+  customBangs.forEach((bang: BangItem) => {
+    // Handle both string and array of triggers
+    const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
+    triggers.forEach((trigger: string) => {
+      customBangMap.set(trigger, bang);
+    });
+  });
+
+  // Filter out default bangs that have been overridden by custom bangs
+  const filteredDefaultBangs = defaultBangs.filter(bang => {
+    // Handle both string and array of triggers
+    const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
+    // If any trigger from this bang is overridden by a custom bang, exclude it
+    return !triggers.some(trigger => customBangMap.has(trigger));
+  });
+
+  // Combine the filtered default bangs with custom bangs
+  return [...filteredDefaultBangs, ...customBangs];
+}
 
 /**
  * Binary search to find the starting index for bangs with a given prefix

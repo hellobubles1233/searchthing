@@ -9,6 +9,7 @@ import { filterAndSortBangs } from "../utils/bangSearchUtil";
 import { getCombinedBangsFromSettings } from "../utils/bangSettingsUtil";
 import { clearBangFilterCache } from "../utils/bangCoreUtil";
 import { BangItem } from "../types/BangItem";
+import { MAX_FILTERED_ITEMS } from "../utils/bangSearchUtil";
 import { 
   buildElementFromItem, 
   HandleHovers, 
@@ -43,7 +44,7 @@ export class BangDropdown implements DropdownRenderer {
   constructor(inputElement: HTMLInputElement, options: BangDropdownOptions = {}) {
     this.inputElement = inputElement;
     this.options = {
-      maxItems: 25,
+      maxItems: MAX_FILTERED_ITEMS,
       maxHeight: '30vh',
       ...options
     };

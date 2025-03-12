@@ -5,6 +5,7 @@ import { loadSettings } from "./settings";
 import { bangs as preDefinedBangs } from "../bang";
 import { FALLBACK_BANG } from "./bangCoreUtil";
 import { findBang } from "./bangCoreUtil";
+import { combineBangs } from "./bangSearchUtil";
 
 export function findDefaultBangFromSettings(): BangItem {
     // First try to find the user's preferred default bang
@@ -31,29 +32,7 @@ export function getCombinedBangsFromSettings(): BangItem[] {
       return preDefinedBangs;
     }
   
-    console.log(`getCombinedBangs: Processing ${settings.customBangs.length} custom bangs`);
-  
-    // Create a map of custom bangs by trigger for quick lookup
-    const customBangMap = new Map<string, BangItem>();
-    
-    // Track custom bangs by their triggers
-    settings.customBangs.forEach((bang: BangItem) => {
-      // Handle both string and array of triggers
-      const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
-      triggers.forEach((trigger: string) => {
-        customBangMap.set(trigger, bang);
-      });
-    });
-  
-    // Filter out default bangs that have been overridden by custom bangs
-    const filteredDefaultBangs = preDefinedBangs.filter(bang => {
-      // Handle both string and array of triggers
-      const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
-      // If any trigger from this bang is overridden by a custom bang, exclude it
-      return !triggers.some(trigger => customBangMap.has(trigger));
-    });
-  
-    // Combine the filtered default bangs with custom bangs
-    return [...filteredDefaultBangs, ...settings.customBangs];
+    // Use the utility function to combine bangs
+    return combineBangs(preDefinedBangs, settings.customBangs);
   }
 
