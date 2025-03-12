@@ -484,8 +484,13 @@ export class SettingsModal extends MainModal {
       }
       
       // Save the setting
-      updateSetting('defaultBang', cleanBangText);
-      this.onSettingsChange(this.settings);
+      try {
+        updateSetting('defaultBang', cleanBangText);
+        this.onSettingsChange(this.settings);
+      } catch (error) {
+        console.error('Failed to update default bang setting:', error);
+        this.showErrorNotification('Failed to save your default bang setting.');
+      }
     } else {
       this.defaultBangInput.value = cleanBangText;
     }
