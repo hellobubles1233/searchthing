@@ -1,14 +1,14 @@
 import { createElement } from "../utils/dom";
 import { SettingsModal } from "./SettingsModal";
 import { loadSettings, UserSettings, saveSettings } from "../utils/settings";
-import { getUrlParameters, performRedirect } from "../utils/redirect";
+import { performRedirect } from "../utils/redirect";
 import { CustomBangModal } from "./CustomBangModal";
 import { bangWorker } from "../utils/workerUtils";
 import { SearchInputComponent } from "./SearchInputComponent";
 import { SearchInfoComponent, BangExample } from "./SearchInfoComponent";
 import { BangSuggestionManager } from "./BangSuggestionManager";
 import { SearchHeaderComponent } from "./SearchHeaderComponent";
-
+import { getParametersFromUrl } from "../utils/urlUtils";
 export class SearchForm {
   private container: HTMLDivElement;
   private settingsModal: SettingsModal;
@@ -32,7 +32,7 @@ export class SearchForm {
     });
     
     // Check if this is a recursive query
-    const urlParams = getUrlParameters();
+    const urlParams = getParametersFromUrl(window.location.href);
     const isRecursive = urlParams.get("recursive") === "true";
     const query = urlParams.get("q");
     
@@ -161,7 +161,7 @@ export class SearchForm {
   public focus(): void {
     setTimeout(() => {
       // Check if this is a recursive query
-      const urlParams = getUrlParameters();
+      const urlParams = getParametersFromUrl(window.location.href);
       const isRecursive = urlParams.get("recursive") === "true";
       const query = urlParams.get("q");
       

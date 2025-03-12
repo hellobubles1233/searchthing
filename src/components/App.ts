@@ -3,7 +3,7 @@ import { Footer } from "./Footer";
 import { SearchForm } from "./SearchForm";
 
 // Import helper function from redirect.ts
-import { getUrlParameters } from "../utils/redirect";
+import { getParametersFromUrl } from "../utils/urlUtils";
 
 export class App {
   private container: HTMLDivElement;
@@ -91,7 +91,7 @@ export class App {
     console.log("Current URL:", currentUrl);
     
     // Use custom function to handle malformed URLs
-    const urlParams = getUrlParameters();
+    const urlParams = getParametersFromUrl(currentUrl);
     const isRecursive = urlParams.get("recursive") === "true";
     const query = urlParams.get("q");
     

@@ -4,7 +4,7 @@ import { getCombinedBangs, findDefaultBang, findBang, FALLBACK_BANG, getBaseDoma
 import { showRedirectLoadingScreen } from "../components/RedirectLoadingScreen";
 import queryString from "query-string";
 import { BangItem } from "../types/BangItem";
-
+import { getParametersFromUrl, validateRedirectUrl } from "./urlUtils";
 //Fall back to google if no bang is found. 
 
 
@@ -24,62 +24,6 @@ export type BangRedirectResult = {
  */
 class BangRedirector {
   private defaultBang: BangItem | undefined;
-
-  /**
-   * Helper function to extract query parameters even if URL is malformed
-   * Uses query-string library for robust parsing
-   */
-  public getUrlParameters(): URLSearchParams {
-    try {
-      // Parse URL with query-string
-      const parsed = queryString.parseUrl(window.location.href, { parseFragmentIdentifier: true });
-      const params = new URLSearchParams();
-      
-      // Add all parameters from the query section
-      Object.entries(parsed.query).forEach(([key, value]) => {
-        if (Array.isArray(value)) {
-          // Handle array values
-          value.forEach(val => val !== null && params.append(key, val));
-        } else if (value !== null) {
-          // Handle string values
-          params.append(key, value);
-        }
-      });
-      
-      // If there's a fragment with query params, add those too
-      if (parsed.fragmentIdentifier && parsed.fragmentIdentifier.includes('=')) {
-        const fragmentParams = queryString.parse(parsed.fragmentIdentifier);
-        Object.entries(fragmentParams).forEach(([key, value]) => {
-          if (Array.isArray(value)) {
-            value.forEach(val => val !== null && params.append(key, val));
-          } else if (value !== null) {
-            params.append(key, value);
-          }
-        });
-      }
-      
-      return params;
-    } catch (error) {
-      console.error("Error parsing URL parameters:", error);
-      return new URLSearchParams();
-    }
-  }
-
-  /**
-   * Validate that a URL is safe to redirect to
-   * This provides basic security to prevent open redirect vulnerabilities
-   */
-  private validateRedirectUrl(url: string): boolean {
-    try {
-      new URL(url);
-      return true;
-    } catch (error) {
-      console.error("Invalid redirect URL:", url, error);
-      return false;
-    }
-  }
-
-
 
   //THIS IS A LAST RESORT! If it's used, something is seriously wrong.
   private generateCompletelyNewBang(): BangItem {
@@ -157,7 +101,7 @@ class BangRedirector {
       );
       
       // Validate the URL is safe to redirect to
-      if (!searchUrl || !this.validateRedirectUrl(searchUrl)) {
+      if (!searchUrl || !validateRedirectUrl(searchUrl)) {
         return { 
           success: false, 
           error: "Invalid redirect URL generated",
@@ -198,7 +142,7 @@ class BangRedirector {
       
       showRedirectLoadingScreen(bangName, url)
         .then(() => {
-          if (this.validateRedirectUrl(url)) 
+          if (validateRedirectUrl(url)) 
             window.location.replace(url);
           else
             console.error("Final URL validation failed");
@@ -217,17 +161,7 @@ class BangRedirector {
   }
 }
 
-// Create singleton instance for backwards compatibility with existing code
-const defaultRedirector = new BangRedirector();
-
-// Export functions that use the default redirector for backwards compatibility
-export function getUrlParameters(): URLSearchParams {
-  return defaultRedirector.getUrlParameters();
-}
-
 export function performRedirect(): boolean {
-  // Create a fresh redirector instance to ensure we always have the latest settings
-  const freshRedirector = new BangRedirector();
-  const urlParams = freshRedirector.getUrlParameters();
-  return freshRedirector.performRedirect(urlParams);
+  const urlParams = getParametersFromUrl(window.location.href);
+  return new BangRedirector().performRedirect(urlParams);
 } 
