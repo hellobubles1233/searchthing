@@ -5,7 +5,6 @@ import {
   updateSetting,
   UserSettings 
 } from "../utils/settings";
-import { BangItem } from "../types/BangItem";
 import { BangDropdown } from "./BangDropdown";
 import { CustomBangModal } from "./CustomBangModal";
 import { setKeyboardNavigationActive } from '../utils/dropdownUtils';
@@ -18,7 +17,6 @@ export class SettingsModal extends MainModal {
   // UI elements for default bang setting
   private defaultBangInput: HTMLInputElement | null = null;
   private bangDropdown: BangDropdown | null = null;
-  private selectedBangItem: BangItem | null = null;
   private customBangManagerModal: CustomBangModal;
   
   constructor(onSettingsChange: (settings: UserSettings) => void = () => {}) {
@@ -104,7 +102,6 @@ export class SettingsModal extends MainModal {
           : googleBang.t;
           
         this.settings.defaultBang = trigger;
-        this.selectedBangItem = googleBang;
         
         // Update the display label only, NOT the input field
         const currentBangService = document.querySelector('[id="current-bang-service"]');
@@ -126,7 +123,6 @@ export class SettingsModal extends MainModal {
       );
       
       if (matchingBang) {
-        this.selectedBangItem = matchingBang;
         // Use the specific trigger that was entered
         this.settings.defaultBang = bangText;
         
@@ -198,7 +194,6 @@ export class SettingsModal extends MainModal {
       
       if (matchingBang) {
         currentBangService.textContent = `${matchingBang.s}`;
-        this.selectedBangItem = matchingBang;
       } else {
         currentBangService.textContent = `${bangText} - Unknown Service`;
       }
@@ -244,8 +239,6 @@ export class SettingsModal extends MainModal {
         
         // Don't focus the input to avoid blur handler
         // this.defaultBangInput.focus();
-        
-        this.selectedBangItem = null;
         
         // Reset to default Google in the display ONLY, not in the input
         const bangService = document.getElementById('current-bang-service');
@@ -301,7 +294,6 @@ export class SettingsModal extends MainModal {
         );
         
         if (directMatch) {
-          this.selectedBangItem = directMatch;
           // Update the currently using label with the matched service
           const bangService = document.getElementById('current-bang-service');
           if (bangService) {
@@ -410,7 +402,6 @@ export class SettingsModal extends MainModal {
     );
     
     if (selectedBang) {
-      this.selectedBangItem = selectedBang;
       this.settings.defaultBang = cleanBangText;
       
       // Use clean text without prefix
