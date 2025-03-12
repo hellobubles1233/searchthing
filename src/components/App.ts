@@ -28,14 +28,14 @@ export class App {
     // Add the base ReBangLogo image
     const logoImg = createElement('img', {
       src: '/ReBangLogo.png',
-      alt: 'ReBang Logo',
+      alt: '',
       className: 'w-full h-full object-contain drop-shadow-[0_0_15px_rgba(0,0,0,0.6)]'
     });
     
     // Add the top logo with hue-shift animation on hover
     const logoTopImg = createElement('img', {
       src: '/ReBangLogoTopOnly.png',
-      alt: 'ReBang Logo Top',
+      alt: '',
       className: 'w-full h-full object-contain absolute top-0 left-0 z-10'
     });
     
@@ -61,6 +61,38 @@ export class App {
       .brightness-115 {
         filter: brightness(1.15);
       }
+      
+      .heebo-heading {
+        font-family: "Heebo", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 700;
+        font-style: normal;
+        letter-spacing: -0.02em;
+      }
+      
+      .josefin-sans-exclamation {
+        font-family: "Josefin Sans", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 900;
+        font-style: normal;
+        transform: scaleX(1.4);
+        display: inline-block;
+        letter-spacing: -0.05em;
+      }
+      
+      @keyframes pulse-shadow {
+        0% { text-shadow: 0 0 4px rgba(0, 0, 0, 0.7); }
+        50% { text-shadow: 0 0 8px rgba(0, 0, 0, 0.9); }
+        100% { text-shadow: 0 0 4px rgba(0, 0, 0, 0.7); }
+      }
+      
+      .animate-pulse-shadow {
+        animation: pulse-shadow 4s infinite ease-in-out;
+      }
+      
+      .rebang-glow {
+        text-shadow: 0 0 10px rgba(186, 85, 211, 0.4);
+      }
     `;
     document.head.appendChild(style);
     
@@ -78,10 +110,33 @@ export class App {
     logoContainer.appendChild(logoImg);
     logoContainer.appendChild(logoTopImg);
     
-    // Create header with Tailwind classes - JetBrains Mono font
+    // Create a container for the header with a subtle background - significantly wider padding
+    const headerContainer = createElement('div', {
+      className: 'mb-8 py-3 px-20 inline-block w-auto'
+    });
+    
+    // Create header with Tailwind classes - with added padding
     const header = createElement('h1', {
-      className: 'text-5xl md:text-6xl font-bold mb-8 py-4 bg-gradient-to-r from-[#1c269b] via-[#1c269b] to-[#1c269b] bg-clip-text text-transparent drop-shadow-sm font-["JetBrains_Mono",monospace] tracking-wider'
-    }, ['!ReBang']);
+      className: 'text-8xl md:text-8xl font-bold py-2 tracking-wider flex items-center justify-center pr-4 '
+    });
+    
+    // Create the exclamation mark using the image
+    const exclamationImg = createElement('img', {
+      src: '/ReBangFullExclamation.png',
+      alt: 'Exclamation Mark',
+      className: 'h-17 md:h-20 mr-3 relative z-10 drop-shadow-[0_0_8px_rgba(0,0,0,0.7)] -mt-8'
+    });
+    
+    // Create the "ReBang" text with a subtle purple glow - with added padding
+    const rebangText = createElement('span', {
+      className: 'bg-gradient-to-r from-[#8a2be2] via-[#9932cc] to-[#ba55d3] bg-clip-text text-transparent heebo-heading rebang-glow pr-2 pb-4 inline-block'
+    }, ['ReBang']);
+    // Append both parts to the header
+    header.appendChild(exclamationImg);
+    header.appendChild(rebangText);
+    
+    // Add header to its container
+    headerContainer.appendChild(header);
     
     // Create search form early so we can position elements properly
     this.searchForm = new SearchForm();
@@ -131,7 +186,7 @@ export class App {
       jokeContainer.appendChild(jokeText);
       
       // Add the joke container between the header and search form
-      contentContainer.append(logoContainer, header, jokeContainer);
+      contentContainer.append(logoContainer, headerContainer, jokeContainer);
       
       // Setup the typewriter effect with a simpler implementation
       const style = document.createElement('style');
@@ -168,7 +223,7 @@ export class App {
       // If not in recursive mode, add elements in normal order
       contentContainer.append(
         logoContainer,
-        header, 
+        headerContainer, 
         this.searchForm.getElement()
       );
     }
