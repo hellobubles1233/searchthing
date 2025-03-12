@@ -1,6 +1,6 @@
 import { bangs } from "../bang";
 import { loadSettings, UserSettings } from "./settings";
-import { getCombinedBangs, findDefaultBang, findBang, FALLBACK_BANG, getBaseDomain } from "./bangUtils";
+import { getCombinedBangs, findDefaultBang, findBang, FALLBACK_BANG, getBaseDomain, getBangName } from "./bangUtils";
 import { showRedirectLoadingScreen } from "../components/RedirectLoadingScreen";
 import queryString from "query-string";
 import { BangItem } from "../types/BangItem";
@@ -22,31 +22,8 @@ export type BangRedirectResult = {
  * BangRedirector class to handle all redirect functionality
  * This eliminates global state and provides better encapsulation
  */
-export class BangRedirector {
-  private settings: UserSettings;
-  private combinedBangs: BangItem[];
+class BangRedirector {
   private defaultBang: BangItem | undefined;
-
-  /**
-   * Create a new BangRedirector instance with fresh settings
-   */
-  constructor() {
-    try {
-      this.settings = loadSettings();
-      this.combinedBangs = getCombinedBangs(this.settings);
-      this.defaultBang = findDefaultBang(this.settings);
-    } catch (error) {
-      console.error("Failed to initialize BangRedirector:", error);
-      // Set fallbacks if initialization fails
-      this.settings = { 
-        customBangs: [],
-        redirectToHomepageOnEmptyQuery: true 
-      };
-      this.combinedBangs = [...bangs]; // Use just the pre-defined bangs as fallback
-      this.defaultBang = findBang("g");
-    }
-  }
-
 
   /**
    * Helper function to extract query parameters even if URL is malformed
@@ -54,12 +31,8 @@ export class BangRedirector {
    */
   public getUrlParameters(): URLSearchParams {
     try {
-      const currentUrl = window.location.href;
-      
       // Parse URL with query-string
-      const parsed = queryString.parseUrl(currentUrl, { parseFragmentIdentifier: true });
-      
-      // Create URLSearchParams from the parsed query object
+      const parsed = queryString.parseUrl(window.location.href, { parseFragmentIdentifier: true });
       const params = new URLSearchParams();
       
       // Add all parameters from the query section
@@ -98,13 +71,7 @@ export class BangRedirector {
    */
   private validateRedirectUrl(url: string): boolean {
     try {
-      // Ensure URL is properly formatted
       new URL(url);
-      
-      // Additional checks could be added here as needed:
-      // - Allowlist of domains
-      // - Block specific patterns or schemes
-      
       return true;
     } catch (error) {
       console.error("Invalid redirect URL:", url, error);
@@ -112,59 +79,75 @@ export class BangRedirector {
     }
   }
 
+
+
+  //THIS IS A LAST RESORT! If it's used, something is seriously wrong.
+  private generateCompletelyNewBang(): BangItem {
+    console.warn("Generating completely new bang as a last resort.");
+    console.error("!!! For some reason, we could not find the FALLBACK_BANG in the combinedBangs array. !!! ");
+    console.error("!!! This should never happen. Please report this bug to the developers. !!! ");
+    const newBang = {
+      c: "Online Services",
+      d: "www.google.com",
+      r: 1942262,
+      s: "Google",
+      sc: "Google",
+      t: "g",
+      u: "https://www.google.com/search?q={{{s}}}",
+    }
+    return newBang;
+  }
+
+  //Both determineBangCandidate and determineBangUsed have logic to handle finding alternative bangs if the first choice is not found.
+  //This may be over engineered. But I wanted to be safe.
+  private determineBangUsed(bangCandidate: string): BangItem {
+    // 1. If there's a bang candidate, just use that. (This will only fail if the bangCandidate is not a valid bang trigger)
+    // 2. If there's no bang candidate, use the default bang.
+    // 3. If there's no default bang, use the fallback bang.
+    // 4. If there's no fallback bang, generate a completely new bang.
+    return findBang(bangCandidate) ?? this.defaultBang ?? findBang(FALLBACK_BANG) ?? this.generateCompletelyNewBang()
+  }
+
+  private determineBangCandidate(query: string): string {
+    const match = query.match(/!(\S+)/i);
+    const matchBang = match?.[1]?.toLowerCase();
+    const trigger = Array.isArray(this.defaultBang?.t) ? this.defaultBang?.t[0] : this.defaultBang?.t
+    return matchBang ?? trigger ?? FALLBACK_BANG;
+  }
+  
+
   /**
    * Get the redirect URL based on the bang and query
    * Refresh settings each time to ensure we have the latest
    */
   public getRedirect(urlParams: URLSearchParams): BangRedirectResult {
-    try {
-      // Fully refresh all internal data on each request to ensure we have latest settings
-      this.settings = loadSettings();
-      this.combinedBangs = getCombinedBangs(this.settings);
-      this.defaultBang = findDefaultBang(this.settings);
+    try {;
+      this.defaultBang = findDefaultBang(loadSettings());
 
       // Use custom function to handle malformed URLs
       const query = urlParams.get("q") || "";
       
-      if (!query) {
-        return { success: false, error: "No query parameter found" };
-      }
+      if (!query) return { success: false, error: "No query parameter found" };
 
-      const match = query.match(/!(\S+)/i);
-
-      //Either the bang from the query, the default bang, or the fallback bang if all else fails.
-      const bangCandidate = match?.[1]?.toLowerCase() ?? 
-        (Array.isArray(this.defaultBang?.t) ? this.defaultBang?.t[0] : this.defaultBang?.t) ?? 
-        FALLBACK_BANG;
-      
-      // Find bang by checking if the bangCandidate matches any trigger. If not, use the default bang.
-      const selectedBang = findBang(bangCandidate) ?? this.defaultBang ?? findBang(FALLBACK_BANG);
-      
-      if (!selectedBang) {
-        return { 
-          success: false, 
-          error: "No valid bang found and no default configured" 
-        };
-      }
+      const bangCandidate: string = this.determineBangCandidate(query);
+      const selectedBang: BangItem = this.determineBangUsed(bangCandidate);
 
       // Get bang name for return value
-      const bangName = Array.isArray(selectedBang.t) 
-        ? selectedBang.t[0] 
-        : selectedBang.t;
+      const bangName = getBangName(selectedBang);
 
       // Remove the first bang from the query
       const cleanQuery = query.replace(/!\S+\s*/i, "").trim();
 
-      // If query is empty and redirectToHomepageOnEmptyQuery is enabled, redirect to the base domain
-      if (cleanQuery === "" && this.settings.redirectToHomepageOnEmptyQuery) {
+      //There used to be a check here for a specific setting that defaulted to true.
+      //But I couldnt find a case where anyone would want it off, so I removed it.
+      //There wasnt even a way to set it in the settings page.
+      if (cleanQuery === "") {
         const baseDomain = getBaseDomain(selectedBang.u);
-        if (baseDomain) {
           return { 
             success: true, 
-            url: baseDomain,
+            url: baseDomain ?? "https://www.google.com",
             bangUsed: bangName
           };
-        }
       }
 
       // Format the search URL, replacing template parameters
@@ -202,40 +185,27 @@ export class BangRedirector {
    */
   public performRedirect(urlParams: URLSearchParams): boolean {
     try {
-      // Use custom function to handle malformed URLs
-      const isRecursive = urlParams.get("recursive") === "true";
-      
       // If recursive parameter is true, don't redirect
-      if (isRecursive) {
-        return false;
-      }
+      if (urlParams.get("recursive") === "true") return false;
 
       const redirect = this.getRedirect(urlParams);
 
-      if (!redirect.success || !redirect.url) {
-        console.error("No valid redirect URL:", redirect.error);
-        return false;
-      }
+      if (!redirect.success || !redirect.url) return false;
 
-      // Extract the final URL
       const url = redirect.url;
       
-      // Get bang name for loading screen
       const bangName = redirect.bangUsed || "search";
       
-      // For redirects, show a brief loading screen before redirecting
       showRedirectLoadingScreen(bangName, url)
         .then(() => {
-          // Double-check URL before final redirect for extra safety
-          if (this.validateRedirectUrl(url)) {
+          if (this.validateRedirectUrl(url)) 
             window.location.replace(url);
-          } else {
+          else
             console.error("Final URL validation failed");
-          }
+          
         })
         .catch(error => {
           console.error("Error showing loading screen:", error);
-          // Still redirect even if loading screen fails
           window.location.replace(url);
         });
       

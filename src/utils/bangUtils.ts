@@ -123,6 +123,14 @@ export function findBang(bang: string): BangItem | undefined {
   });
 }
 
+export function getBangName(bang: BangItem): string {
+  if (Array.isArray(bang.t)) {
+    return bang.t[0];
+  } else {
+    return bang.t;
+  }
+}
+
 export const FALLBACK_BANG = "g";
 
 export function findDefaultBang(settings: UserSettings): BangItem | undefined {
