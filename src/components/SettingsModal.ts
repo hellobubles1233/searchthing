@@ -10,6 +10,27 @@ import { CustomBangModal } from "./CustomBangModal";
 import { setKeyboardNavigationActive } from '../utils/dropdownUtils';
 import { MainModal } from "./MainModal";
 import { getCombinedBangsFromSettings } from "../utils/bangSettingsUtil";
+
+/**
+ * Simple debounce function to delay execution
+ * @param func The function to debounce
+ * @param wait Wait time in milliseconds
+ */
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  
+  return function(...args: Parameters<T>): void {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    
+    timeout = setTimeout(() => {
+      func(...args);
+      timeout = null;
+    }, wait);
+  };
+}
+
 export class SettingsModal extends MainModal {
   private settings: UserSettings;
   private onSettingsChange: (settings: UserSettings) => void;
@@ -18,6 +39,9 @@ export class SettingsModal extends MainModal {
   private defaultBangInput: HTMLInputElement | null = null;
   private bangDropdown: BangDropdown | null = null;
   private customBangManagerModal: CustomBangModal;
+  
+  // Track if we're in the process of selecting an item
+  private isSelectingItem: boolean = false;
   
   constructor(onSettingsChange: (settings: UserSettings) => void = () => {}) {
     super({
@@ -370,7 +394,15 @@ export class SettingsModal extends MainModal {
       // Create dropdown if it doesn't exist
       if (!this.bangDropdown) {
         this.bangDropdown = new BangDropdown(inputElement, {
-          onSelectBang: (bangText: string) => this.handleBangSelection(bangText),
+          onSelectBang: (bangText: string) => {
+            // Set flag to indicate we're selecting an item
+            this.isSelectingItem = true;
+            this.handleBangSelection(bangText);
+            // Reset flag after a short delay
+            setTimeout(() => {
+              this.isSelectingItem = false;
+            }, 100);
+          },
           appendTo: document.body, // Append to body to avoid modal clipping
           positionStyle: 'fixed',  // Use fixed positioning
           zIndex: 9999            // Ensure it's above other elements
@@ -421,7 +453,15 @@ export class SettingsModal extends MainModal {
       // Create dropdown if it doesn't exist
       if (!this.bangDropdown) {
         this.bangDropdown = new BangDropdown(inputElement, {
-          onSelectBang: (bangText: string) => this.handleBangSelection(bangText),
+          onSelectBang: (bangText: string) => {
+            // Set flag to indicate we're selecting an item
+            this.isSelectingItem = true;
+            this.handleBangSelection(bangText);
+            // Reset flag after a short delay
+            setTimeout(() => {
+              this.isSelectingItem = false;
+            }, 100);
+          },
           appendTo: document.body, // Append to body to avoid modal clipping
           positionStyle: 'fixed',  // Use fixed positioning
           zIndex: 9999            // Ensure it's above other elements
@@ -434,23 +474,31 @@ export class SettingsModal extends MainModal {
       setKeyboardNavigationActive(true);
     });
     
-    // Handle blur to hide dropdown
-    inputElement.addEventListener('blur', (e) => {
-      // Delay hiding to allow for selection
-      setTimeout(() => {
-        this.cleanupDropdown();
-        
-        // Only process if this wasn't triggered by the clear button
-        // Check if the related target is the clear button
-        const clearButtonClicked = e.relatedTarget === clearButton;
-        if (!clearButtonClicked) {
-          // Process and save the bang setting based on input
-          this.processAndSaveBangSetting();
-        }
-      }, 200);
+    // Create a debounced version of the cleanup function
+    const debouncedCleanup = debounce((e: FocusEvent) => {
+      // Don't process if we're in the middle of selecting an item
+      if (this.isSelectingItem) {
+        return;
+      }
+      
+      this.cleanupDropdown();
+      
+      // Only process if this wasn't triggered by the clear button
+      // Check if the related target is the clear button
+      const clearButtonClicked = e.relatedTarget === clearButton;
+      if (!clearButtonClicked) {
+        // Process and save the bang setting based on input
+        this.processAndSaveBangSetting();
+      }
       
       // Disable keyboard navigation
       setKeyboardNavigationActive(false);
+    }, 200);
+    
+    // Handle blur to hide dropdown
+    inputElement.addEventListener('blur', (e) => {
+      // Use the debounced cleanup function
+      debouncedCleanup(e);
     });
   }
   
