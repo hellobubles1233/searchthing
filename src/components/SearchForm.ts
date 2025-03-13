@@ -165,38 +165,37 @@ export class SearchForm {
       const isRecursive = urlParams.get("recursive") === "true";
       const query = urlParams.get("q");
       
-      console.log("SearchForm focus - Is Recursive:", isRecursive, "Query:", query);
+      // Get the input element
+      const inputElement = this.searchInput.getInputElement();
+      
+      // Always add the recursive styling
+      inputElement.classList.add('recursive-input');
+      
+      // Create and add a CSS rule for the subtle effect if it doesn't exist
+      if (!document.getElementById('recursive-style')) {
+        const style = document.createElement('style');
+        style.id = 'recursive-style';
+        style.textContent = `
+          .recursive-input {
+            border-color: rgba(138, 43, 226, 0.3) !important;
+            transition: all 0.3s ease;
+          }
+          
+          .recursive-input:focus {
+            border-color: rgba(138, 43, 226, 0.5) !important;
+            box-shadow: 0 0 10px rgba(138, 43, 226, 0.2);
+          }
+        `;
+        document.head.appendChild(style);
+      }
       
       if (isRecursive && query) {
         console.log("Filling search input with query:", query);
         // If we have a recursive query, fill the search input with it
         this.searchInput.setValue(query);
         
-        const inputElement = this.searchInput.getInputElement();
-        
         // Ensure cursor is positioned at the end
         inputElement.selectionStart = inputElement.selectionEnd = query.length;
-        
-        // Add a subtle pulse effect to the input rather than a full glow
-        inputElement.classList.add('recursive-input');
-        
-        // Create and add a CSS rule for the subtle effect
-        if (!document.getElementById('recursive-style')) {
-          const style = document.createElement('style');
-          style.id = 'recursive-style';
-          style.textContent = `
-            .recursive-input {
-              border-color: rgba(138, 43, 226, 0.3) !important;
-              transition: all 0.3s ease;
-            }
-            
-            .recursive-input:focus {
-              border-color: rgba(138, 43, 226, 0.5) !important;
-              box-shadow: 0 0 10px rgba(138, 43, 226, 0.2);
-            }
-          `;
-          document.head.appendChild(style);
-        }
         
         // Update the header to show recursive mode
         this.searchHeader.updateHeading(true);

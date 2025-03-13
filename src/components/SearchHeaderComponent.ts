@@ -25,10 +25,10 @@ export class SearchHeaderComponent {
       className: 'mb-6 flex flex-col items-center'
     });
     
-    // Create a heading that shows when in recursive mode and normal mode
+    // Create a heading that always shows the easter egg text
     this.heading = createElement('h2', {
       className: 'text-white text-2xl font-light text-center tracking-wider',
-    }, [options.isRecursive ? 'You found an easter egg!' : 'Search with !Bangs']);
+    }, [options.isRecursive ? 'You found an easter egg!' : 'Start Searching with a !Bang']);
     
     // Create buttons container for action buttons that spans full width
     this.buttonsContainer = createElement('div', {
@@ -105,7 +105,8 @@ export class SearchHeaderComponent {
   }
   
   public updateHeading(isRecursive: boolean): void {
-    this.heading.textContent = isRecursive ? 'You found an easter egg!' : 'Search with !Bangs';
+    // Always show the easter egg text
+    this.heading.textContent = 'You found an easter egg!';
   }
   
   public setCustomBangsButtonEnabled(enabled: boolean): void {

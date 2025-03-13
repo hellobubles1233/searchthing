@@ -86,7 +86,11 @@ export class App {
     headerContainer.appendChild(header);
     
     // Create search form early so we can position elements properly
+    // Always use the recursive styling for the search form
     this.searchForm = new SearchForm();
+    
+    // Add the recursive styling to the search input
+    this.addRecursiveInputStyling();
     
     // Check if this is a recursive mode request
     const urlParams = getParametersFromUrl(window.location.href);
@@ -112,6 +116,38 @@ export class App {
     setTimeout(() => {
       contentContainer.classList.add('fade-in');
     }, 50);
+  }
+  
+  /**
+   * Adds the recursive styling to the search input
+   */
+  private addRecursiveInputStyling(): void {
+    // Create and add a CSS rule for the recursive input styling
+    if (!document.getElementById('recursive-style')) {
+      const style = document.createElement('style');
+      style.id = 'recursive-style';
+      style.textContent = `
+        .recursive-input {
+          border-color: rgba(138, 43, 226, 0.3) !important;
+          transition: all 0.3s ease;
+        }
+        
+        .recursive-input:focus {
+          border-color: rgba(138, 43, 226, 0.5) !important;
+          box-shadow: 0 0 10px rgba(138, 43, 226, 0.2);
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    // Apply the recursive styling after the render is complete
+    setTimeout(() => {
+      // Add the recursive styling to all search inputs
+      const searchInputs = document.querySelectorAll('input[type="text"]');
+      searchInputs.forEach(input => {
+        input.classList.add('recursive-input');
+      });
+    }, 300);
   }
   
   /**
