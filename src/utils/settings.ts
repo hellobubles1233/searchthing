@@ -14,7 +14,7 @@ export interface UserSettings {
 export const DEFAULT_SETTINGS: UserSettings = {
   defaultBang: "g",  // Default to Google if user hasn't specified a preference
   customBangs: [],
-  showRedirectLoadingScreen: true,
+  showRedirectLoadingScreen: false,
 };
 
 // Settings key in local storage
