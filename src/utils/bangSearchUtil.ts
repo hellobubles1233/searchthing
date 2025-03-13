@@ -1,7 +1,7 @@
 // This module contains utility functions that are used to search, filter, and sort through the bangs.
 
 import { BangItem } from "../types/BangItem";
-import { bangFilterCache } from "./bangCoreUtil";
+import { bangFilterCache, getGlobalTriggerMap } from "./bangCoreUtil";
 
 export const MAX_FILTERED_ITEMS = 35;
 
@@ -77,31 +77,6 @@ function binarySearchBangPrefix(bangs: BangItem[], prefix: string): number {
     
     return result;
   }
-  
-
-/**
- * Create a map of all bang triggers for fast lookup
- * Maps each trigger to the bang objects that use it
- * 
- * @param bangs Array of all bang items
- * @returns Map of triggers to bang objects
- */
-function createTriggerMap(bangs: BangItem[]): Map<string, BangItem[]> {
-    const triggerMap = new Map<string, BangItem[]>();
-    
-    for (const bang of bangs) {
-      const triggers = Array.isArray(bang.t) ? bang.t : [bang.t];
-      
-      for (const trigger of triggers) {
-        const normalizedTrigger = trigger.toLowerCase();
-        const existingBangs = triggerMap.get(normalizedTrigger) || [];
-        existingBangs.push(bang);
-        triggerMap.set(normalizedTrigger, existingBangs);
-      }
-    }
-    
-    return triggerMap;
-  }
 
   function filterAndSortByCategory(query: string, bangs: BangItem[]){
     return bangs
@@ -113,7 +88,7 @@ function createTriggerMap(bangs: BangItem[]): Map<string, BangItem[]> {
     bangs: BangItem[], 
     query: string, 
     maxItems: number = MAX_FILTERED_ITEMS,
-    triggerMap: Map<string, BangItem[]> = createTriggerMap(bangs)
+    triggerMap?: Map<string, BangItem[]>
   ): BangItem[] {
   
     // get the normalized query
@@ -124,13 +99,15 @@ function createTriggerMap(bangs: BangItem[]): Map<string, BangItem[]> {
     if (cachedResults) 
       return cachedResults;
   
+    // Use the provided trigger map or get the global one
+    const effectiveTriggerMap = triggerMap || getGlobalTriggerMap();
     
     const categoryMatchBangs = filterAndSortByCategory(normalizedQuery, bangs);  // First, get category-matching bangs sorted by relevance
   
     const startsWithBangs = new Set<BangItem>();  // Find all bangs with triggers that start with the query
     
     if (normalizedQuery.length > 0) 
-      binarySearch(bangs, normalizedQuery, startsWithBangs, triggerMap); // Use binary search for primary triggers (optimized by alphabetical ordering)
+      binarySearch(bangs, normalizedQuery, startsWithBangs, effectiveTriggerMap); // Use binary search for primary triggers (optimized by alphabetical ordering)
     
     
     // Filter out bangs that are in the category matches
@@ -223,8 +200,7 @@ function createTriggerMap(bangs: BangItem[]): Map<string, BangItem[]> {
     bangFilterCache.set(normalizedQuery, results);
     
     return results;
-  } 
-
+  }
 
   function binarySearch(bangs: BangItem[], normalizedQuery: string, startsWithBangs: Set<BangItem>, triggerMap: Map<string, BangItem[]>) {
     const startIndex = binarySearchBangPrefix(bangs, normalizedQuery);
@@ -245,7 +221,7 @@ function createTriggerMap(bangs: BangItem[]): Map<string, BangItem[]> {
   
     // For secondary triggers, we use the trigger map
     // Find all triggers that start with the query
-    for (const [trigger, matchingBangs] of triggerMap.entries() || []) {
+    for (const [trigger, matchingBangs] of triggerMap.entries()) {
       if (trigger.startsWith(normalizedQuery)) {
         // Add all bangs that have this trigger
         for (const bang of matchingBangs) {
@@ -254,7 +230,6 @@ function createTriggerMap(bangs: BangItem[]): Map<string, BangItem[]> {
       }
     }
   }
-
 
   function sortMatches(matches: BangItem[], query: string): BangItem[] {
     return matches.sort((a, b) => {

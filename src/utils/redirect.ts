@@ -26,11 +26,14 @@ function getRedirect(urlParams: URLSearchParams): BangRedirectResult {
     const query = urlParams.get("q") || "";
     if (!query) return { success: false, error: "No query parameter found" };
 
+    //Easily the fastest call here. Just a single lookup.
     const defaultBang = findDefaultBangFromSettings();
+
+    //This function is fast. It's just a regex to extract the bang trigger.
     const bangCandidate: string = determineBangCandidate(query, defaultBang);
     const selectedBang: BangItem = determineBangUsed(bangCandidate, defaultBang);
 
-    // Get bang name for return value
+    //
     const bangName = getBangFirstTrigger(selectedBang);
 
     // Remove the first bang from the query

@@ -3,13 +3,13 @@
 import { BangItem } from "../types/BangItem";
 import { loadSettings } from "./settings";
 import { bangs as preDefinedBangs } from "../bang";
-import { FALLBACK_BANG } from "./bangCoreUtil";
+import { FALLBACK_BANG_TRIGGER } from "./bangCoreUtil";
 import { findBang } from "./bangCoreUtil";
 import { combineBangs } from "./bangSearchUtil";
 
 export function findDefaultBangFromSettings(): BangItem {
     // First try to find the user's preferred default bang
-    const userDefaultBang = findBang(loadSettings().defaultBang ?? FALLBACK_BANG);
+    const userDefaultBang = findBang(loadSettings().defaultBang ?? FALLBACK_BANG_TRIGGER);
 
     if (userDefaultBang) 
         return userDefaultBang;
