@@ -94,7 +94,7 @@ export function performRedirect(): boolean {
     const url = redirect.url;
     
     const bangName = redirect.bangUsed || "search";
-    
+    if (loadSettings().showRedirectLoadingScreen) {
     showRedirectLoadingScreen(bangName, url)
       .then(() => {
         if (validateRedirectUrl(url)) 
@@ -107,6 +107,9 @@ export function performRedirect(): boolean {
         console.error("Error showing loading screen:", error);
         window.location.replace(url);
       });
+    } else {
+      window.location.replace(url);
+    }
     
     return true;
   } catch (error) {

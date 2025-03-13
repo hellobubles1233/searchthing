@@ -6,6 +6,8 @@ import {
 } from "../utils/settings";
 import { MainModal } from "./MainModal";
 import { BangSettingsSection } from "./BangSettingsSection";
+import { RedirectSettingsSection } from "./RedirectSettingsSection";
+import { DEFAULT_SETTINGS } from "../utils/settings";
 
 /**
  * Main settings modal component
@@ -14,6 +16,7 @@ export class SettingsModal extends MainModal {
   private settings: UserSettings;
   private onSettingsChange: (settings: UserSettings) => void;
   private bangSettingsSection: BangSettingsSection;
+  private redirectSettingsSection: RedirectSettingsSection;
   
   constructor(onSettingsChange: (settings: UserSettings) => void = () => {}) {
     super({
@@ -23,6 +26,9 @@ export class SettingsModal extends MainModal {
         // Clean up resources
         if (this.bangSettingsSection) {
           this.bangSettingsSection.dispose();
+        }
+        if (this.redirectSettingsSection) {
+          this.redirectSettingsSection.dispose();
         }
       }
     });
@@ -49,6 +55,12 @@ export class SettingsModal extends MainModal {
       this.handleSettingsChange,
       this.showErrorNotification.bind(this)
     );
+    
+    // Initialize the redirect settings section
+    this.redirectSettingsSection = new RedirectSettingsSection(
+      this.settings,
+      this.handleSettingsChange
+    );
   }
   
   /**
@@ -64,11 +76,7 @@ export class SettingsModal extends MainModal {
    * Get default settings as a fallback
    */
   private getDefaultSettings(): UserSettings {
-    return {
-      defaultBang: undefined,
-      customBangs: [],
-      redirectToHomepageOnEmptyQuery: false
-    };
+    return DEFAULT_SETTINGS;
   }
   
   /**
@@ -120,8 +128,12 @@ export class SettingsModal extends MainModal {
     });
     
     // Render the bang settings section
-    const defaultBangSection = this.bangSettingsSection.render(this.createFormGroup.bind(this));
-    content.appendChild(defaultBangSection);
+    const bangSection = this.bangSettingsSection.render(this.createFormGroup.bind(this));
+    content.appendChild(bangSection);
+    
+    // Render the redirect settings section
+    const redirectSection = this.redirectSettingsSection.render(this.createFormGroup.bind(this));
+    content.appendChild(redirectSection);
     
     // Add more settings sections here as needed
     // Each section should be a separate component

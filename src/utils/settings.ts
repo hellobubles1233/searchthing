@@ -6,7 +6,7 @@ import { BangItem } from "../types/BangItem";
 export interface UserSettings {
   defaultBang?: string;  // The user's preferred default bang (e.g., "g" for Google)
   customBangs: BangItem[];  // Custom user-defined bangs
-  redirectToHomepageOnEmptyQuery: boolean;  // Whether to redirect to homepage for empty queries
+  showRedirectLoadingScreen: boolean;  // Whether to show the redirect loading screen
   // Add more settings here as needed
 }
 
@@ -14,7 +14,7 @@ export interface UserSettings {
 export const DEFAULT_SETTINGS: UserSettings = {
   defaultBang: "g",  // Default to Google if user hasn't specified a preference
   customBangs: [],
-  redirectToHomepageOnEmptyQuery: true,  // Default to redirecting to homepage for empty queries
+  showRedirectLoadingScreen: true,
 };
 
 // Settings key in local storage
