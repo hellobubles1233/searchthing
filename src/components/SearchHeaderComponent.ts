@@ -27,7 +27,7 @@ export class SearchHeaderComponent {
     
     // Create a heading that always shows the easter egg text
     this.heading = createElement('h2', {
-      className: 'text-white text-2xl font-light text-center tracking-wider',
+      className: 'text-white text-lg sm:text-xl md:text-2xl font-light text-center tracking-wider',
     }, [options.isRecursive ? 'You found an easter egg!' : 'Start Searching with a !Bang']);
     
     // Create buttons container for action buttons that spans full width

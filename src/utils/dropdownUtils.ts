@@ -238,7 +238,7 @@ export function buildElementFromItem(item: BangItem) : HTMLDivElement {
     }, [item.d]);
     
     const category = createElement('span', {
-      className: 'text-white/40 text-xs px-2 py-0.5 bg-[#3a86ff]/10 rounded-full'
+      className: 'hidden sm:inline-flex text-white/40 text-xs px-2 py-0.5 bg-[#3a86ff]/10 rounded-full'
     }, [`${item.c}${item.sc !== item.c ? ` · ${item.sc}` : ''}`]);
     
     detailRow.append(website, category);
@@ -253,7 +253,7 @@ export function buildElementFromItem(item: BangItem) : HTMLDivElement {
       
       if (otherTriggers.length > 0) {
         const aliasesRow = createElement('div', {
-          className: 'text-xs text-white/40 mt-1'
+          className: 'hidden sm:block text-xs text-white/40 mt-1'
         });
         
         const aliasesLabel = createElement('span', {

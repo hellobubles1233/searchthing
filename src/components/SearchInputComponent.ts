@@ -46,7 +46,7 @@ export class SearchInputComponent {
     this.searchInput = createElement('input', {
       type: 'text',
       placeholder: 'Type your search query or !bang search',
-      className: 'w-full px-4 py-3 pr-14 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded-xl border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white shadow-lg',
+      className: 'w-full px-4 py-2 sm:py-3 pr-14 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded-xl border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white shadow-lg',
       autocomplete: 'off',
       spellcheck: 'false',
       autocapitalize: 'off'

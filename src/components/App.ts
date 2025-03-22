@@ -58,24 +58,24 @@ export class App {
     
     // Create a container for the header with a subtle background
     const headerContainer = createElement('div', {
-      className: 'mb-8 py-3 px-20 inline-block w-auto'
+      className: 'mb-8 py-3 px-4 sm:px-10 md:px-20 inline-block w-auto'
     });
     
     // Create header with Tailwind classes
     const header = createElement('h1', {
-      className: 'text-8xl md:text-8xl font-bold py-2 tracking-wider flex items-center justify-center pr-4'
+      className: 'text-5xl sm:text-6xl md:text-8xl font-bold py-2 tracking-wider flex items-center justify-center pr-4'
     });
     
     // Create the exclamation mark using the image
     const exclamationImg = createElement('img', {
       src: '/ReBangFullExclamation.png',
       alt: 'Exclamation Mark',
-      className: 'h-17 md:h-20 mr-3 relative z-10 drop-shadow-[0_0_8px_rgba(0,0,0,0.7)] -mt-8'
+      className: 'h-12 sm:h-14 md:h-20 mr-3 relative z-10 drop-shadow-[0_0_8px_rgba(0,0,0,0.7)] -mt-8'
     });
     
     // Create the "ReBang" text with a subtle purple glow
     const rebangText = createElement('span', {
-      className: 'bg-gradient-to-r from-[#8a2be2] via-[#9932cc] to-[#ba55d3] bg-clip-text text-transparent heebo-heading rebang-glow pr-2 pb-4 inline-block'
+      className: 'text-5xl sm:text-6xl md:text-8xl bg-gradient-to-r from-[#8a2be2] via-[#9932cc] to-[#ba55d3] bg-clip-text text-transparent heebo-heading rebang-glow pr-2 pb-4 inline-block'
     }, ['ReBang']);
     
     // Append both parts to the header
