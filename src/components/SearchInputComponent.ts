@@ -60,7 +60,7 @@ export class SearchInputComponent {
     const rickrollGif = createElement('img', {
       src: '/rickroll.gif', // Assuming rickroll.gif is in the public folder
       alt: 'Loading...', 
-      className: 'w-6 h-6' // Adjust size as needed
+      className: 'w-100 h-100' // Adjust size as needed
     });
     loadingIndicator.appendChild(rickrollGif);
     

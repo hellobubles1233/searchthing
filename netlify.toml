@@ -1,7 +1,6 @@
 # Netlify configuration file
-
 [build]
-  command = "pnpm run build"
+  command = "npx vite build"
   publish = "dist"
   ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ./package.json"
 
@@ -31,21 +30,25 @@
 # Enable brotli compression for better performance
 [build.processing]
   skip_processing = false
+
 [build.processing.css]
   bundle = true
   minify = true
+
 [build.processing.js]
   bundle = true
   minify = true
+
 [build.processing.html]
   pretty_urls = true
+
 [build.processing.images]
   compress = true
 
 # Environment configuration
 [build.environment]
   NODE_VERSION = "20"
-  NPM_FLAGS = "--version"
+  NPM_FLAGS = "--version" 
   PNPM_FLAGS = "--version"
 
 # Plugin configurations
@@ -54,10 +57,6 @@
 
 [[plugins]]
   package = "netlify-plugin-submit-sitemap"
-
-# Post processing configuration
-[build.processing.html]
-  pretty_urls = true
 
 # Set security headers
 [[headers]]
