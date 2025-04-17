@@ -53,7 +53,8 @@ export class RedirectSettingsSection {
     const checkbox = createElement('input', {
       type: 'checkbox',
       id: 'redirect-loading-toggle',
-      className: 'w-4 h-4 text-[#3a86ff] bg-gray-700 border-gray-600 rounded focus:ring-[#3a86ff]'
+      // Use theme colors for checkbox
+      className: 'w-4 h-4 text-gray-600 bg-gray-100 border-gray-300 rounded focus:ring-gray-500 focus:ring-2'
     }) as HTMLInputElement;
     
     // Set initial state from settings
@@ -65,7 +66,8 @@ export class RedirectSettingsSection {
     // Create label for the checkbox
     const label = createElement('label', {
       htmlFor: 'redirect-loading-toggle',
-      className: 'ml-2 text-sm text-white'
+      // Use standard text color
+      className: 'ml-2 text-sm text-gray-700'
     });
     label.textContent = 'Show loading screen during redirects';
     
@@ -87,4 +89,4 @@ export class RedirectSettingsSection {
   public dispose(): void {
     // Clean up any event listeners or resources if needed
   }
-} 
+}

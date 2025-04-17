@@ -58,7 +58,8 @@ export class CustomBangModal extends MainModal {
     
     // Create description
     const description = createElement('p', {
-      className: 'text-white/70 text-sm mb-4'
+      // Use text-light variable
+      className: 'text-[color:var(--text-light)] text-sm mb-4'
     }, ['Create and manage your custom bang shortcuts. Custom bangs will override default bangs with the same shortcut.']);
     
     // Create add button
@@ -67,7 +68,8 @@ export class CustomBangModal extends MainModal {
     });
     
     const addButton = createElement('button', {
-      className: 'bg-[#3a86ff] hover:bg-[#2a76ef] text-white px-4 py-2 rounded-full flex items-center transition-colors',
+      // Use primary-color variable for background, white text, standard radius
+      className: 'bg-[color:var(--primary-color)] hover:bg-[color:var(--primary-hover)] text-white px-4 py-2 rounded-md flex items-center transition-colors',
       type: 'button'
     }, [
       createElement('span', { className: 'mr-1' }, ['+']),
@@ -84,7 +86,8 @@ export class CustomBangModal extends MainModal {
     
     // Create bang list container
     this.bangList = createElement('div', {
-      className: 'max-h-[40vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent'
+      // Use border-color variable and adjust scrollbar colors
+      className: 'max-h-[40vh] overflow-y-auto scrollbar-thin scrollbar-thumb-[color:var(--border-focus-color)] hover:scrollbar-thumb-[color:var(--primary-hover)] scrollbar-track-transparent border-t border-[color:var(--border-color)]'
     });
     
     // Populate bang list
@@ -118,7 +121,8 @@ export class CustomBangModal extends MainModal {
     // If no custom bangs, show a message
     if (!this.settings.customBangs || this.settings.customBangs.length === 0) {
       const emptyMessage = createElement('div', {
-        className: 'text-white/50 text-center py-6'
+        // Use text-light variable
+        className: 'text-[color:var(--text-light)] text-center py-6'
       }, ['No custom bangs yet. Add one to get started!']);
       
       this.bangList.appendChild(emptyMessage);
@@ -137,7 +141,8 @@ export class CustomBangModal extends MainModal {
    */
   private createBangListItem(bang: BangItem): HTMLDivElement {
     const item = createElement('div', {
-      className: 'p-4 hover:bg-black/30 border-b border-white/10 last:border-b-0 flex justify-between items-center'
+      // Use bg-light and border-color variables
+      className: 'p-4 hover:bg-[color:var(--bg-light)] border-b border-[color:var(--border-color)] last:border-b-0 flex justify-between items-center'
     });
     
     // Left side - Bang info
@@ -156,18 +161,21 @@ export class CustomBangModal extends MainModal {
       : `!${bang.t}`;
     
     const trigger = createElement('span', {
-      className: 'font-mono text-[#3a86ff] font-bold'
+      // Use text-color variable
+      className: 'font-mono text-[color:var(--text-color)] font-semibold'
     }, [triggerText]);
     
     const service = createElement('span', {
-      className: 'text-white'
+      // Use text-color variable
+      className: 'text-[color:var(--text-color)]'
     }, [bang.s]);
     
     titleRow.append(trigger, service);
     
     // URL pattern
     const urlPattern = createElement('div', {
-      className: 'text-white/60 text-sm truncate max-w-[250px]'
+      // Use text-light variable
+      className: 'text-[color:var(--text-light)] text-sm truncate max-w-[250px]'
     }, [bang.u]);
     
     bangInfo.append(titleRow, urlPattern);
@@ -179,9 +187,10 @@ export class CustomBangModal extends MainModal {
     
     // Edit button
     const editButton = createElement('button', {
-      className: 'text-white/70 hover:text-white p-1 transition-colors',
+      // Use text-light and text-color variables
+      className: 'text-[color:var(--text-light)] hover:text-[color:var(--text-color)] p-1 transition-colors',
       title: 'Edit'
-    }, ['✏️']);
+    }, ['✏️']); // Ensure emoji renders correctly
     
     editButton.addEventListener('click', () => {
       if (this.bangFormModal) {
@@ -191,9 +200,10 @@ export class CustomBangModal extends MainModal {
     
     // Delete button
     const deleteButton = createElement('button', {
-      className: 'text-white/70 hover:text-[#ff3a3a] p-1 transition-colors',
+      // Use text-light and hover with error color
+      className: 'text-gray-500 hover:text-red-600 p-1 transition-colors',
       title: 'Delete'
-    }, ['🗑️']);
+    }, ['🗑️']); // Ensure emoji renders correctly
     
     deleteButton.addEventListener('click', () => {
       this.deleteBang(bang);
@@ -392,4 +402,4 @@ export class CustomBangModal extends MainModal {
     // Clear the pending delete
     this.pendingDeleteBang = null;
   }
-} 
+}

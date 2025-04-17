@@ -28,7 +28,7 @@ export class SearchForm {
     
     // Create search container with Tailwind classes
     this.container = createElement('div', { 
-      className: 'w-full mt-10 pt-6 border-t border-white/10 relative' 
+    className: 'w-full mt-10 pt-6 border-t border-var(--border-color) relative' // Use CSS var
     });
     
     // Check if this is a recursive query
@@ -81,15 +81,18 @@ export class SearchForm {
       onSubmit: (query) => {
         // Create a loading overlay to prevent white flash
         const loadingOverlay = createElement('div', {
-          className: 'fixed inset-0 bg-[#000] bg-opacity-90 z-50 flex items-center justify-center',
-          style: 'backdrop-filter: blur(5px);'
+        className: 'fixed inset-0 bg-var(--bg-color) bg-opacity-90 z-50 flex items-center justify-center text-var(--text-color)',
+        style: 'backdrop-filter: blur(5px);'
         });
         
-        const spinner = createElement('div', {
-          className: 'w-12 h-12 border-4 border-[#3a86ff] border-t-transparent rounded-full animate-spin'
+        // Replace spinner with Rickroll GIF
+        const rickrollGif = createElement('img', {
+          src: '/rickroll.gif', // Assuming rickroll.gif is in the public folder
+          alt: 'Loading...', 
+          className: 'w-12 h-12' // Adjust size as needed, matching spinner size
         });
         
-        loadingOverlay.appendChild(spinner);
+        loadingOverlay.appendChild(rickrollGif);
         document.body.appendChild(loadingOverlay);
         
         // Short timeout to ensure the overlay is visible before redirect
@@ -177,13 +180,17 @@ export class SearchForm {
         style.id = 'recursive-style';
         style.textContent = `
           .recursive-input {
-            border-color: rgba(138, 43, 226, 0.3) !important;
+-           border-color: rgba(138, 43, 226, 0.3) !important;
++           /* Styles are now primarily handled in App.ts global styles */
++           /* border-color: var(--border-focus-color) !important; */ 
             transition: all 0.3s ease;
           }
           
           .recursive-input:focus {
-            border-color: rgba(138, 43, 226, 0.5) !important;
-            box-shadow: 0 0 10px rgba(138, 43, 226, 0.2);
+-           border-color: rgba(138, 43, 226, 0.5) !important;
+-           box-shadow: 0 0 10px rgba(138, 43, 226, 0.2);
++           /* border-color: var(--primary-color) !important; */ /* Example: Use a theme variable */
++           /* box-shadow: 0 0 5px var(--primary-color); */ /* Example: Use a theme variable */
           }
         `;
         document.head.appendChild(style);
@@ -218,4 +225,4 @@ export class SearchForm {
     // Initialize a new bang suggestion manager
     this.initializeBangSuggestionManager();
   }
-} 
+}

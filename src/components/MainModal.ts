@@ -35,19 +35,22 @@ export class MainModal extends BaseModal {
     protected createModal(): void {
         // Create overlay
         this.overlay = createElement('div', {
-            className: `fixed inset-0 bg-black/60 backdrop-blur-sm z-[${this.config.zIndex}] flex items-center justify-center transition-opacity duration-300`,
+            // Lighter overlay for Notion style
+            className: `fixed inset-0 bg-black/30 backdrop-blur-sm z-[${this.config.zIndex}] flex items-center justify-center transition-opacity duration-300`,
             style: 'opacity: 0;'
         });
         
         // Create modal
         this.modal = createElement('div', {
-            className: `bg-[#120821] border border-white/10 rounded-lg shadow-xl w-full max-w-${this.config.maxWidth} overflow-hidden transition-transform duration-300`,
+            // Use bg-color and border-color from global CSS
+            className: `bg-white border border-[color:var(--border-color)] rounded-lg shadow-md w-full max-w-${this.config.maxWidth} overflow-hidden transition-transform duration-300`,
             style: 'transform: translateY(20px);'
         });
         
         // Create error message container (initially hidden)
         this.errorMessageElement = createElement('div', {
-            className: 'hidden bg-red-500/20 border border-red-500/40 text-white px-4 py-3 mb-4 rounded',
+            // Use error-color and white text
+            className: 'hidden bg-red-100 border border-red-300 text-red-700 px-4 py-3 mb-4 rounded-md',
             style: 'margin: 0 1rem; display: none;'
         });
         
@@ -61,7 +64,8 @@ export class MainModal extends BaseModal {
         
         // Create footer container
         this.footerElement = createElement('div', {
-            className: 'bg-black/30 px-6 py-4 flex justify-end gap-2'
+            // Use bg-light and border-color variables
+            className: 'bg-[color:var(--bg-light)] px-6 py-4 flex justify-end gap-3 border-t border-[color:var(--border-color)]'
         });
         
         // Assemble modal
@@ -84,11 +88,13 @@ export class MainModal extends BaseModal {
     
     private createHeader(): HTMLDivElement {
         const header = createElement('div', {
-            className: 'bg-gradient-to-r from-[#2a004d] to-[#1a0036] px-6 py-4 flex justify-between items-center'
+            // Use border-color variable
+            className: 'bg-white px-6 py-4 flex justify-between items-center border-b border-[color:var(--border-color)]'
         });
         
         const title = createElement('h2', {
-            className: 'text-white text-xl font-bold'
+            // Use text-color variable
+            className: 'text-[color:var(--text-color)] text-lg font-semibold'
         });
         title.textContent = this.config.title;
         
@@ -96,9 +102,10 @@ export class MainModal extends BaseModal {
         
         if (this.config.showCloseButton) {
             const closeButton = createElement('button', {
-                className: 'w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white text-xl font-medium transition-all'
+                // Use text-light, bg-light, and text-color variables
+                className: 'w-7 h-7 flex items-center justify-center rounded-md text-[color:var(--text-light)] hover:bg-[color:var(--bg-light)] hover:text-[color:var(--text-color)] transition-colors'
             });
-            closeButton.textContent = '×';
+            closeButton.innerHTML = '&times;'; // Use HTML entity for 'x'
             closeButton.addEventListener('click', () => {
                 this.hide();
                 if (this.config.onClose) {
@@ -141,9 +148,10 @@ export class MainModal extends BaseModal {
         // Add new buttons
         buttons.forEach(button => {
             const buttonElement = createElement('button', {
+                // Use primary/secondary styles based on theme variables
                 className: button.type === 'primary' 
-                    ? 'bg-[#3a86ff] hover:bg-[#2a76ef] text-white px-4 py-2 rounded transition-colors' 
-                    : 'bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded transition-colors',
+                    ? 'bg-[color:var(--primary-color)] hover:bg-[color:var(--primary-hover)] text-white px-4 py-2 rounded-md transition-colors text-sm font-medium' 
+                    : 'bg-white hover:bg-[color:var(--bg-light)] text-[color:var(--text-color)] border border-[color:var(--border-color)] px-4 py-2 rounded-md transition-colors text-sm font-medium',
                 type: 'button'
             });
             buttonElement.textContent = button.text;
@@ -166,7 +174,8 @@ export class MainModal extends BaseModal {
         
         // Add text
         const helpText = createElement('p', {
-            className: 'text-white/70 text-sm italic'
+            // Use text-light variable
+            className: 'text-[color:var(--text-light)] text-xs'
         });
         helpText.textContent = text;
         

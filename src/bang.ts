@@ -44929,12 +44929,12 @@ export const bangs = [{
   },
   {
     c: "Search",
-    d: "rebang.online",
+    d: "searchting.online", // Assuming domain might change
     r: 0,
-    s: "Rebang",
+    s: "searchting",
     sc: "Search",
-    t: "rebang",
-    u: "https://rebang.online/search?q={{{s}}}&recursive=true",
+    t: "searchting",
+    u: "https://searchting.online/search?q={{{s}}}&recursive=true", // Assuming domain might change
   },
   
 {

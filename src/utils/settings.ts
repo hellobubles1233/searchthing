@@ -18,7 +18,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
 };
 
 // Settings key in local storage
-const SETTINGS_STORAGE_KEY = 'rebang_settings';
+const SETTINGS_STORAGE_KEY = 'searchting_settings';
 
 /**
  * Saves user settings to local storage
@@ -80,4 +80,4 @@ export function updateSetting<K extends keyof UserSettings>(
   const currentSettings = loadSettings();
   currentSettings[key] = value;
   saveSettings(currentSettings);
-} 
+}

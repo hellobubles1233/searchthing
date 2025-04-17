@@ -26,7 +26,7 @@ export class SearchInfoComponent {
     // Create badges for each example
     this.examples.forEach(ex => {
       const badge = createElement('span', {
-        className: 'inline-flex items-center px-2 py-1 rounded-full bg-white/10 text-white/70 text-xs backdrop-blur-sm transition-all hover:bg-white/20 cursor-pointer'
+        className: 'inline-flex items-center px-2 py-1 rounded-full bg-var(--bg-light) text-var(--text-light) text-xs backdrop-blur-sm transition-all hover:bg-var(--border-color) hover:text-var(--text-color) cursor-pointer' // Use CSS vars
       }, [`${ex.name} (${ex.desc})`]);
       
       // Add click event to redirect to search with this bang and recursive=true
@@ -51,7 +51,7 @@ export class SearchInfoComponent {
     // Create badges for each example
     this.examples.forEach(ex => {
       const badge = createElement('span', {
-        className: 'inline-flex items-center px-2 py-1 rounded-full bg-white/10 text-white/70 text-xs backdrop-blur-sm transition-all hover:bg-white/20 cursor-pointer'
+        className: 'inline-flex items-center px-2 py-1 rounded-full bg-var(--bg-light) text-var(--text-light) text-xs backdrop-blur-sm transition-all hover:bg-var(--border-color) hover:text-var(--text-color) cursor-pointer' // Use CSS vars
       }, [`${ex.name} (${ex.desc})`]);
       
       // Add click event to redirect to search with this bang and recursive=true
@@ -62,4 +62,4 @@ export class SearchInfoComponent {
       this.container.appendChild(badge);
     });
   }
-} 
+}

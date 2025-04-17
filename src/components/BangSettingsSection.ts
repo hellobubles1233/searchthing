@@ -81,7 +81,9 @@ export class BangSettingsSection {
     });
     
     const customBangsButton = createElement('button', {
-      className: 'text-[#3a86ff] hover:text-[#2a76ef] text-sm underline flex items-center gap-1',
+      // Use text-light and standard hover, remove underline, adjust padding/rounding
+      // Use text-light, text-color, and bg-light variables
+      className: 'text-[color:var(--text-light)] hover:text-[color:var(--text-color)] text-sm px-2 py-1 rounded-md hover:bg-[color:var(--bg-light)] flex items-center gap-1',
       type: 'button'
     });
     customBangsButton.textContent = 'Manage Custom Bangs';
@@ -116,4 +118,4 @@ export class BangSettingsSection {
   public dispose(): void {
     this.inputHandler.dispose();
   }
-} 
+}

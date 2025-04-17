@@ -85,13 +85,15 @@ export class BangFormModal extends MainModal {
     
     // Create error message container (initially hidden)
     this.errorMessage = createElement('div', {
-      className: 'bg-red-500/20 border border-red-500/40 text-white px-4 py-3 mb-4 rounded',
+      // Use theme error colors
+      className: 'bg-red-100 border border-red-300 text-red-700 px-4 py-3 mb-4 rounded-md',
       style: 'display: none;'
     });
     
     // Create content container
     const content = createElement('div', {
-      className: 'px-8 py-6'
+      // Use standard padding
+      className: 'px-6 py-6'
     });
     
     // Add error message and form to content
@@ -143,7 +145,8 @@ export class BangFormModal extends MainModal {
     
     this.triggerInput = createElement('input', {
       type: 'text',
-      className: 'w-full px-3 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
+      // Use theme input styles
+      className: 'w-full px-3 py-2 bg-white hover:bg-gray-50 placeholder-gray-400 rounded-md border border-gray-200 focus:border-gray-400 focus:outline-none transition-all text-gray-800 shadow-sm',
       placeholder: 'e.g., g, google',
       autocomplete: 'off',
       spellcheck: 'false',
@@ -154,7 +157,7 @@ export class BangFormModal extends MainModal {
     if (this.isEditMode) {
       // Make trigger read-only in edit mode to prevent changing the ID
       this.triggerInput.readOnly = true;
-      this.triggerInput.className += ' opacity-70 cursor-not-allowed';
+      this.triggerInput.className += ' bg-gray-100 text-gray-500 cursor-not-allowed';
     }
     
     // Add validation for trigger - alphanumeric only
@@ -177,7 +180,8 @@ export class BangFormModal extends MainModal {
     
     this.serviceInput = createElement('input', {
       type: 'text',
-      className: 'w-full px-3 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
+      // Use theme input styles
+      className: 'w-full px-3 py-2 bg-white hover:bg-gray-50 placeholder-gray-400 rounded-md border border-gray-200 focus:border-gray-400 focus:outline-none transition-all text-gray-800 shadow-sm',
       placeholder: 'e.g., Google Maps',
       autocomplete: 'off',
       required: 'true'
@@ -195,7 +199,8 @@ export class BangFormModal extends MainModal {
     
     this.domainInput = createElement('input', {
       type: 'text',
-      className: 'w-full px-3 py-2 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white',
+      // Use theme input styles
+      className: 'w-full px-3 py-2 bg-white hover:bg-gray-50 placeholder-gray-400 rounded-md border border-gray-200 focus:border-gray-400 focus:outline-none transition-all text-gray-800 shadow-sm',
       placeholder: 'e.g., maps.google.com',
       autocomplete: 'off',
       required: 'true'
@@ -449,4 +454,4 @@ export class BangFormModal extends MainModal {
     
     return true;
   }
-} 
+}

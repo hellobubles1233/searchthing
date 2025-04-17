@@ -26,40 +26,43 @@ export class SearchInputComponent {
       className: 'relative w-full'
     });
     
-    // Create clickable ReBang logo on the right that acts as a submit button
+    // Create clickable magnifying glass icon on the right that acts as a submit button - Notion-style
     const searchButton = createElement('button', {
       type: 'submit',
-      className: 'absolute right-4 top-1/2 transform -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-transparent hover:scale-110 active:scale-95 transition-all outline-none focus:outline-none focus:ring-0 z-10'
+      className: 'absolute right-3 top-1/2 transform -translate-y-1/2 w-8 h-8 flex items-center justify-center text-var(--text-light) hover:text-var(--text-color) transition-colors outline-none focus:outline-none focus:ring-0 z-10'
     });
     
-    // Add the ReBang logo with shadow and no background
+    // Add the Notion-style magnifying glass icon
     const logoImg = createElement('img', {
-      src: '/ReBangLogoSillo.png',
-      alt: '',
-      style: '',
-      className: 'w-8 h-8 filter drop-shadow-[0_2px_3px_rgba(0,0,0,0.7)]'
+      src: '/notion-magnifying-glass.svg', // Ensure this SVG is black or dark gray
+      alt: 'Search',
+      className: 'w-5 h-5 filter-current-color' // Add filter for theme
     });
     
     searchButton.appendChild(logoImg);
     
-    // Create search input with Tailwind classes
+    // Create search input with Tailwind classes - Notion-style
     this.searchInput = createElement('input', {
       type: 'text',
-      placeholder: 'Type your search query or !bang search',
-      className: 'w-full px-4 py-2 sm:py-3 pr-14 bg-black/20 backdrop-blur-sm hover:bg-black/30 placeholder-white/50 rounded-xl border border-white/10 focus:border-[#3a86ff]/50 focus:bg-black/40 focus:outline-none transition-all text-white shadow-lg',
+      placeholder: 'Type your search query...',
+      // Updated Notion-style classes
+      className: 'w-full pl-4 pr-12 py-2 sm:py-3 bg-var(--bg-color) hover:bg-var(--bg-light) placeholder-var(--text-light) rounded-md border border-var(--border-color) focus:border-var(--border-focus-color) focus:outline-none transition-all text-var(--text-color) shadow-sm recursive-input', // Use CSS vars and add recursive class
       autocomplete: 'off',
       spellcheck: 'false',
       autocapitalize: 'off'
     });
     
-    // Add loading state indicator
+    // Add loading state indicator (Rickroll GIF)
     const loadingIndicator = createElement('div', {
-      className: 'absolute right-14 top-1/2 transform -translate-y-1/2 opacity-0 transition-opacity duration-200',
+      className: 'absolute right-14 top-1/2 transform -translate-y-1/2 opacity-0 transition-opacity duration-200 filter-current-color', // Add filter for theme
     });
-    const spinner = createElement('div', {
-      className: 'w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin'
+    // Replace spinner with Rickroll GIF
+    const rickrollGif = createElement('img', {
+      src: '/rickroll.gif', // Assuming rickroll.gif is in the public folder
+      alt: 'Loading...', 
+      className: 'w-6 h-6' // Adjust size as needed
     });
-    loadingIndicator.appendChild(spinner);
+    loadingIndicator.appendChild(rickrollGif);
     
     // Assemble the search components
     inputWrapper.append(this.searchInput, searchButton, loadingIndicator);
@@ -86,9 +89,16 @@ export class SearchInputComponent {
         // Add loading state to button when form is submitted
         const button = this.form.querySelector('button');
         if (button) {
-          // Replace the icon with a spinner
-          button.innerHTML = '<span class="animate-spin text-white">↻</span>';
+          // Show the loading indicator instead of replacing button content
+          const indicator = this.form.querySelector('.opacity-0');
+          if (indicator) {
+            indicator.classList.remove('opacity-0');
+            indicator.classList.add('opacity-100');
+          }
           button.disabled = true;
+          // Hide the icon while loading
+          const icon = button.querySelector('img');
+          if (icon) icon.style.visibility = 'hidden'; // Use visibility to keep layout
         }
         
         options.onSubmit(query);
@@ -126,4 +136,4 @@ export class SearchInputComponent {
   public focus(): void {
     this.searchInput.focus();
   }
-} 
+}

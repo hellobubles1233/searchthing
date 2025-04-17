@@ -24,7 +24,16 @@ function main(): void {
     const rootElement = document.querySelector<HTMLDivElement>("#app");
     
     if (rootElement) {
-      app.render(rootElement);
+    // Clear the root element before appending
+    rootElement.innerHTML = ''; 
+    rootElement.appendChild(app.getElement());
+    // Focus the search input after a short delay (moved from App.ts render)
+    setTimeout(() => {
+      const searchInput = rootElement.querySelector('input[type="text"]');
+      if (searchInput) {
+        searchInput.focus();
+      }
+    }, 300);
     } else {
       console.error("Root element '#app' not found");
     }

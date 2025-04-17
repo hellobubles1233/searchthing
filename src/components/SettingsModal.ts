@@ -96,9 +96,10 @@ export class SettingsModal extends MainModal {
    * Display an error notification to the user
    */
   private showErrorNotification(message: string): void {
-    // Create a simple error notification
+    // Create a simple error notification using theme colors
     const notification = createElement('div', {
-      className: 'fixed bottom-4 right-4 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg z-50 animate-fade-in'
+      // Use error-color from global CSS or a specific red
+      className: 'fixed bottom-4 right-4 bg-var(--error-color) text-white px-4 py-3 rounded-md shadow-md z-[100] animate-fade-in' // Use CSS var
     });
     
     notification.textContent = message;
@@ -140,6 +141,8 @@ export class SettingsModal extends MainModal {
     
     // Set the content and footer AFTER super.show() creates the modal structure
     this.setContent(content);
-    this.setFooterText('Settings are automatically saved when changed');
+    // Use text-light variable for footer text
+-   this.setFooterText('Settings are automatically saved when changed', 'text-[color:var(--text-light)] text-xs');
++   this.setFooterText('Settings are automatically saved when changed', 'text-var(--text-light) text-xs'); // Use CSS var
   }
-} 
+}

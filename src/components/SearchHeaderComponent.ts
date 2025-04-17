@@ -27,7 +27,8 @@ export class SearchHeaderComponent {
     
     // Create a heading that always shows the easter egg text
     this.heading = createElement('h2', {
-      className: 'text-white text-lg sm:text-xl md:text-2xl font-light text-center tracking-wider',
+      // Use text-color from global CSS or a specific dark gray
+      className: 'text-var(--text-color) text-lg sm:text-xl md:text-2xl font-light text-center tracking-wider', // Use CSS var
     }, [options.isRecursive ? 'You found an easter egg!' : 'Start Searching with a !Bang']);
     
     // Create buttons container for action buttons that spans full width
@@ -37,7 +38,8 @@ export class SearchHeaderComponent {
     
     // Add custom bangs button on the left
     this.customBangsButton = createElement('button', {
-      className: 'text-white/50 hover:text-white/90 transition-colors px-3 py-1 rounded-full hover:bg-white/10 flex items-center'
+      // Use text-light and hover with primary-color
+      className: 'text-var(--text-light) hover:text-var(--text-color) transition-colors px-3 py-1 rounded-md hover:bg-var(--bg-light) flex items-center' // Use CSS vars
     }, [
       'My Bangs',
       createElement('span', { className: 'ml-1' }, ['+'])
@@ -55,13 +57,15 @@ export class SearchHeaderComponent {
     
     // Add about button (question mark)
     this.aboutButton = createElement('button', {
-      className: 'text-white/50 hover:text-white/90 transition-colors w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10',
-      title: 'About !ReBang'
+      // Use text-light and hover with primary-color
+      className: 'text-var(--text-light) hover:text-var(--text-color) transition-colors w-8 h-8 rounded-md flex items-center justify-center hover:bg-var(--bg-light)', // Use CSS vars
+      title: 'About searchting'
     });
     
     // Create question mark icon
     const questionMarkIcon = createElement('span', {
-      className: 'text-xl font-semibold'
+      // Ensure color matches button text
+      className: 'text-lg font-medium'
     }, ['?']);
     
     this.aboutButton.appendChild(questionMarkIcon);
@@ -73,14 +77,16 @@ export class SearchHeaderComponent {
     
     // Add settings gear icon using SVG
     this.settingsIcon = createElement('button', {
-      className: 'text-white/50 hover:text-white/90 transition-colors w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10'
+      // Use text-light and hover with primary-color
+      className: 'text-var(--text-light) hover:text-var(--text-color) transition-colors w-8 h-8 rounded-md flex items-center justify-center hover:bg-var(--bg-light)' // Use CSS vars
     });
     
-    // Create an img element for the SVG
+    // Create an img element for the SVG (ensure gear-black.svg is visible on white/light gray bg)
     const gearIcon = createElement('img', {
-      src: '/gear-black.svg',
+      src: '/gear-black.svg', // Assuming this is a dark icon
       alt: 'Settings',
-      className: 'w-6 h-6 opacity-80 filter invert hover:opacity-100 transition-opacity'
+      // Remove invert filter, adjust size/opacity if needed
+      className: 'w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity filter-current-color' // Add filter for theme
     });
     
     this.settingsIcon.appendChild(gearIcon);
@@ -118,4 +124,4 @@ export class SearchHeaderComponent {
     this.settingsIcon.disabled = !enabled;
     this.settingsIcon.style.opacity = enabled ? '1' : '0.5';
   }
-} 
+}
