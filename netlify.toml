@@ -1,6 +1,6 @@
 # Netlify configuration file
 [build]
-  command = "npx vite build"
+  command = "npx tsc && npx vite build"
   publish = "dist"
   ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ./package.json"
 
