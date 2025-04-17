@@ -1,11 +1,11 @@
 # Netlify configuration file
 
 [build]
-  command = "npm run build"
+  command = "pnpm run build"
   publish = "dist"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ./package.json"
 
 # Handle SPA routing by redirecting all paths to index.html
-# This ensures the app's client-side routing works correctly
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -41,3 +41,30 @@
   pretty_urls = true
 [build.processing.images]
   compress = true
+
+# Environment configuration
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--version"
+  PNPM_FLAGS = "--version"
+
+# Plugin configurations
+[[plugins]]
+  package = "@netlify/plugin-lighthouse"
+
+[[plugins]]
+  package = "netlify-plugin-submit-sitemap"
+
+# Post processing configuration
+[build.processing.html]
+  pretty_urls = true
+
+# Set security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:;"
